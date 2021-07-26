@@ -31,7 +31,7 @@ class ParticleData(Snapshot):
     def __init__(self, fname):
         super().__init__(fname)
         self.n_parts = self._hdf["Header"].attrs["NumPart_Total"][1]
-        self.part_mass = self._hdf["Header"].attrs["MassTable"][1]
+        self.part_mass = self._hdf["Header"].attrs["MassTable"][1] * 1e10
 
         self.pos = self._hdf["PartType1"]["Coordinates"][:]
         self.vel = self._hdf["PartType1"]["Velocities"][:]
@@ -52,6 +52,8 @@ class HaloCatalog(Snapshot):
 
         self.pos = self._hdf["Group"]["GroupPos"][:]
         self.vel = self._hdf["Group"]["GroupVel"][:]
+        self.masses = self._hdf["Group"]["GroupMass"][:] * 1e10
+
         self.offsets = self._hdf["Group"]["GroupOffsetType"][:,1]
         self.lengths = self._hdf["Group"]["GroupLen"][:]
 
@@ -62,4 +64,13 @@ class HaloCatalog(Snapshot):
         offset = self.offsets[halo_i]
         length = self.lengths[halo_i]
         return particle_data.ids[offset:offset+length]
+
+    def calc_hmf(self, bins):
+        hmf = np.zeros_like(bins)
+        errors = np.zeros_like(bins)
+        for i in range(len(bins)):
+            counts = np.sum(self.masses > bins[i])
+            hmf[i] = counts / self.box_size**3
+            errors[i] = np.sqrt(counts) / self.box_size**3
+        return hmf, errors
 
