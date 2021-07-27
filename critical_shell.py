@@ -55,7 +55,7 @@ def critical_shell(pos, center, part_mass, crit_dens, crit_ratio=2, center_tol=1
     radius = 1e-3
     radii = np.linalg.norm(pos - center, axis=1)
     dr = rcrit_tol * 100
-    iters = 0
+    iters = i
     density_converged = False
     while dr > rcrit_tol:
         iters += 1
@@ -86,6 +86,14 @@ if __name__ == "__main__":
     fof_tab_data = h5py.File("/projects/caps/aaronjo2/dm-l256-n256-a100/fof_subhalo_tab_021.hdf5", 'r')
     sh_masses = fof_tab_data["Subhalo"]["SubhaloMass"][:] * 1e10
     sh_pos = fof_tab_data["Subhalo"]["SubhaloCM"][:]
+
+    group_offsets = fof_tab_data["Group"]["GroupOffsetType"][:,1]
+    group_lens = fof_tab_data["Group"]["GroupLen"][:]
+    group_ends = group_offsets + group_lens
+    outer_fuzz_start = group_ends[-1]
+
+    sh_group_i = fof_tab_data["Subhalo"]["SubhaloGroupNr"][:]
+
     fof_tab_data.close()
 
     print("Particle mass: {:.3e}".format(pd.part_mass))
@@ -98,8 +106,10 @@ if __name__ == "__main__":
     radii = []
     centers_s = []
 
-    min_mass = 1e14
+    min_mass = 5e13
     print("{:} subhalos above min mass".format(np.sum(sh_masses > min_mass)))
+
+    check_dup_len = 10
 
     halos_found = 0
     sh_processed = 0
@@ -107,29 +117,39 @@ if __name__ == "__main__":
     for i in range(len(sh_masses)):
         if sh_masses[i] < min_mass:
             continue
+        
+        sh_processed += 1
 
         if sh_processed % 10 == 0 and sh_processed != 0:
             time_end = time.perf_counter()
-            print(sh_processed, halos_found, time_end - time_start)
+            print(sh_processed, halos_found, "{:.2f} sec".format(time_end - time_start))
             time_start = time_end
 
         center = sh_pos[i]
 
         # ignore centers too close to box boundary
         if np.sum(center < 2) or np.sum(center > pd.box_size - 2):
-            print()
-            print("Skipping ", center)
-            print()
+            print("Skipping:", center, "too close to boundary")
             continue
 
-        center_s, radius, c_converged, d_converged = critical_shell(pd.pos, center, pd.part_mass, crit_dens_a100)
+        # only use subset of all positions to speed up critical shell search
+        group_i = sh_group_i[i]
+        pos_indicies = np.hstack((np.arange(group_offsets[group_i], group_ends[group_i]), 
+            np.arange(outer_fuzz_start, len(pd.pos))))
+        #print("Using {:} positions, {:.1f}% of all".format(len(pos_indicies), 100*len(pos_indicies)/len(pd.pos)))
+
+        center_s, radius, c_converged, d_converged = critical_shell(pd.pos[pos_indicies], center, 
+                pd.part_mass, crit_dens_a100)
         if np.sum(center_s < 2) or np.sum(center_s > pd.box_size - 2):
-            print()
-            print("Skipping ", center)
-            print()
+            print("Skipping:", center, "too close to boundary")
             continue
 
         if c_converged * d_converged:
+            # check for duplicate
+            for i in range(np.max((0, len(centers_s) - check_dup_len)), len(centers_s)):
+                if np.linalg.norm(centers_s[i] - center_s) < radii[i] + radius:
+                    print("Skipping duplicate:", centers_s[i], center_s)
+                    continue
             print("Found halo:", center, radius)
             radii.append(radius)
             centers_s.append(center_s)
@@ -137,11 +157,11 @@ if __name__ == "__main__":
         else:
             print("center converged", c_converged, "density converged", d_converged, radius)
 
-        sh_processed += 1
 
-        #print(critical_shell(pd.pos, center, pd.part_mass, crit_dens_a100))
-
-    data = {"centers":np.array(centers), "radii":np.array(radii)}
+    centers = np.array(centers_s)
+    radii = np.array(radii)
+    masses = get_mass(radii, crit_density_a100, a=100)
+    data = {"centers":centers, "radii":radii, "masses":masses}
     file = open("spherical_halos", "wb")
     pickle.dump(data, file)
     file.close()
