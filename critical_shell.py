@@ -8,18 +8,57 @@ import snapshot
 
 
 def get_density(radii, cut_radius, part_mass, a=1):
+    """Calculate density of particles enclosed by a radius.
+    
+    Parameters:
+    radii: ndarray (n,) - Array of all particle radii
+    cut_radius: float - Radius of shell
+    part_mass: float - Particle mass
+    a: float, optional - Scale factor
+    
+    Returns:
+    density: float
+    """
     num_particles = np.sum(radii < cut_radius)
     volume = 4/3 * np.pi * (cut_radius * a)**3
     return num_particles * part_mass / volume
 
 
 def get_mass(radius, density, a=1):
+    """Calculate mass enclosed by a spherical shell.
+    
+    Parameters:
+    radius: float or ndarray - Radius of shell
+    density: float or ndarray - Density of shell
+    a: float, optional - Scale factor
+
+    Returns:
+    mass: float or ndarray
+    """
     volume = 4/3 * np.pi * (radius * a)**3
     return density * volume
 
 
 def critical_shell(pos, center, part_mass, crit_dens, crit_ratio=2, center_tol=1e-3, rcrit_tol=5e-4, maxiters=100):
-    """Find a critical shell starting from given center."""
+    """Find a critical shell starting from given center.
+    
+    Parameters:
+    pos: ndarray (n,3) - Positions of all particles
+    center: ndarray (1,3) - Initial guess for center of shell
+    part_mass: float - Particle mass
+    crit_dens: float - Critical density of universe
+    crit_ratio: float - Ratio of critical shell density to critical density of universe
+    center_tol: float, optional - Tolerance for center convergence
+    rcrit_tol: float, optional - Tolerance for radius convergence
+    maxiters: int, optional - Maximum number of iterations
+
+    Returns:
+    center: ndarray (1,3) - Center of shell
+    radius: float - Radius of shell
+    n_parts: int - Number of particles enclosed
+    center_converged: bool
+    density_converged: bool
+    """
     radius = 0.05
     # find center of largest substructure
     center_converged = False
@@ -73,6 +112,7 @@ def print_dup_error(fof_i, sh_i, center, radius):
 
 
 def check_duplicate(centers, radii, center, radius=0, check_dup_len=10):
+    """Check if a shell is a duplicate or contained within another shell."""
     for i in range(np.max((0, len(centers) - check_dup_len)), len(centers)):
         if np.linalg.norm(centers[i] - center) < radii[i] + radius:
             return i
@@ -113,7 +153,6 @@ if __name__ == "__main__":
     if rank == 0:
         print("Critical density at a = 100: {:.3e}".format(crit_dens_a100))
         print("Particle mass: {:.3e}".format(pd.part_mass))
-        #print("{} subhalos to process, {} ranks, {} per rank".format(len(sh_masses), n_ranks, per_rank))
 
     if rank == 0:
         avg, res = divmod(len(fof_pos_all), n_ranks)
