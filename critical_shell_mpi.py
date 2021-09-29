@@ -4,9 +4,6 @@ from astropy.cosmology import FlatLambdaCDM
 import astropy.units as u
 import pickle
 import h5py
-import time
-import os
-import sys
 import snapshot
 
 
@@ -23,7 +20,7 @@ def get_mass(radius, density, a=1):
 
 def critical_shell(pos, center, part_mass, crit_dens, crit_ratio=2, center_tol=1e-3, rcrit_tol=5e-4, maxiters=100):
     """Find a critical shell starting from given center."""
-    radius = 0.1
+    radius = 0.05
     # find center of largest substructure
     center_converged = False
     for i in range(20):
@@ -56,12 +53,30 @@ def critical_shell(pos, center, part_mass, crit_dens, crit_ratio=2, center_tol=1
         if iters > maxiters:
             break
     
+    # number of particles
+    n_parts = np.sum(new_radii < radius)
+
     # convergence check (maybe not necessary)
     if density < crit_ratio * crit_dens and density > crit_dens and dr < rcrit_tol:
         density_converged = True
 
-    return center, radius, center_converged, density_converged
+    return center, radius, n_parts, center_converged, density_converged
 
+
+def print_conv_error(center_conv, density_conv, fof_i):
+    print("Did not converge {}:".format(fof_i), "center" if not c_conv else '',
+            "density" if not d_conv else '')
+
+
+def print_dup_error(fof_i, sh_i, center, radius):
+    print("Skipping duplicate: fof {}, sh {} ".format(fof_i, sh_i), center, radius)
+
+
+def check_duplicate(centers, radii, center, radius=0, check_dup_len=10):
+    for i in range(np.max((0, len(centers) - check_dup_len)), len(centers)):
+        if np.linalg.norm(centers[i] - center) < radii[i] + radius:
+            return i
+    return -1
 
 
 if __name__ == "__main__":
@@ -69,94 +84,132 @@ if __name__ == "__main__":
     rank = comm.Get_rank()
     n_ranks = comm.Get_size()
     
-    if rank == 0:
-        print("running on {} cores".format(n_ranks))
+    data_dir = "/projects/caps/aaronjo2/dm-l256-n256-a100"
+    pd = snapshot.ParticleData(data_dir + "/snapshot_021.hdf5")
+    
+    # Use H0 = 100 to factor out h, calculate critical density
+    cosmo = FlatLambdaCDM(H0=100, Om0=pd.OmegaMatter)
+    crit_dens_a100 = cosmo.critical_density(-0.99).to(u.Msun / u.Mpc**3).value
 
-    pd = snapshot.ParticleData("/projects/caps/aaronjo2/dm-l256-n256-a100/snapshot_021.hdf5")
-    #hc = snapshot.HaloCatalog("/home/aaron/dm-l50-n128-a100/fof_tab_012.hdf5")
-    fof_tab_data = h5py.File("/projects/caps/aaronjo2/dm-l256-n256-a100/fof_subhalo_tab_021.hdf5", 'r')
-    # 2**15 = 32768
-    sh_masses = fof_tab_data["Subhalo"]["SubhaloMass"][:32768] * 1e10
-    sh_pos = fof_tab_data["Subhalo"]["SubhaloCM"][:32768]
+    fof_tab_data = h5py.File(data_dir + "/fof_subhalo_tab_021.hdf5", 'r')
+
+    if rank == 0:
+        fof_pos_all = fof_tab_data["Group"]["GroupPos"][:]
+        fof_sh_num_all = fof_tab_data["Group"]["GroupNsubs"][:]
+
+    comm.Barrier()
+
+    sh_pos = fof_tab_data["Subhalo"]["SubhaloPos"][:]
+    sh_offsets = fof_tab_data["Group"]["GroupFirstSub"][:]
 
     group_offsets = fof_tab_data["Group"]["GroupOffsetType"][:,1]
     group_lens = fof_tab_data["Group"]["GroupLen"][:]
     group_ends = group_offsets + group_lens
     outer_fuzz_start = group_ends[-1]
 
-    sh_group_i = fof_tab_data["Subhalo"]["SubhaloGroupNr"][:]
-
     fof_tab_data.close()
 
-
-    # Use H0 = 100 to factor out h
-    cosmo = FlatLambdaCDM(H0=100, Om0=pd.OmegaMatter)
-    crit_dens_a100 = cosmo.critical_density(-0.99).to(u.Msun / u.Mpc**3).value
-
-    radii = []
-    centers_s = []
-
-    per_rank = int(len(sh_masses) / n_ranks)
-    
+    # some debug info
     if rank == 0:
         print("Critical density at a = 100: {:.3e}".format(crit_dens_a100))
         print("Particle mass: {:.3e}".format(pd.part_mass))
-        print("{} subhalos to process, {} per rank".format(len(sh_masses), per_rank))
+        #print("{} subhalos to process, {} ranks, {} per rank".format(len(sh_masses), n_ranks, per_rank))
 
-    check_dup_len = 10
+    if rank == 0:
+        avg, res = divmod(len(fof_pos_all), n_ranks)
+        count = np.array([avg+1 if r < res else avg for r in range(n_ranks)])
+        displ = np.array([sum(count[:r]) for r in range(n_ranks)])
+        # randomize data before scattering to make load more even
+        shuffle = np.arange(len(fof_pos_all))
+        np.random.shuffle(shuffle)
+    else:
+        fof_pos_all = np.empty(0)
+        fof_sh_num_all = np.empty(0)
+        count = np.zeros(n_ranks, dtype=int)
+        displ = 0
+        shuffle = None
 
-    halos_found = 0
-    sh_processed = 0
-    time_start = time.perf_counter()
-    for i in range(rank * per_rank, (rank+1) * per_rank):
+    comm.Bcast(count, root=0)
 
-        print("rank {}, i {}  mass {:.2e}".format(rank, i, sh_masses[i]))
+    fof_pos = np.zeros((count[rank],3), dtype=np.float32)
+    fof_sh_num = np.zeros(count[rank], dtype=np.int32)
 
-        sh_processed += 1
+    comm.Scatterv([fof_pos_all[shuffle], 3*count, 3*displ, MPI.FLOAT], fof_pos)
+    comm.Scatterv([fof_sh_num_all[shuffle], count, displ, MPI.INT], fof_sh_num)
 
-        if sh_processed % 100 == 0 and sh_processed != 0:
-            time_end = time.perf_counter()
-            print(sh_processed, halos_found, "{:.2f} sec".format(time_end - time_start))
-            time_start = time_end
+    if rank != 0:
+        shuffle = np.zeros(sum(count), dtype=int)
+    comm.Bcast(shuffle, root=0)
 
-        center = sh_pos[i]
+    radii = []
+    centers = []
 
-        # ignore centers too close to box boundary
-        if np.sum(center < 2) or np.sum(center > pd.box_size - 2):
-            print("Skipping:", center, "too close to boundary")
-            continue
-
+    for i in range(len(fof_pos)):
+    
+        # overall unshuffled index of fof group
+        fof_i = shuffle[sum(count[:rank]) + i]
+        print("{} Processing FoF group {}, {} subgroups".format(rank, fof_i, fof_sh_num[i])) 
+    
         # only use subset of all positions to speed up critical shell search
-        group_i = sh_group_i[i]
-        pos_indicies = np.hstack((np.arange(group_offsets[group_i], group_ends[group_i]), 
+        pos_indicies = np.hstack((np.arange(group_offsets[fof_i], group_ends[fof_i]),
             np.arange(outer_fuzz_start, len(pd.pos))))
 
-        center_s, radius, c_converged, d_converged = critical_shell(pd.pos[pos_indicies], center, 
-                pd.part_mass, crit_dens_a100)
-        if np.sum(center_s < 2) or np.sum(center_s > pd.box_size - 2):
-            print("Skipping:", center, "too close to boundary")
-            continue
+        # fof group with no subgroups
+        if fof_sh_num[i] == 0:
+            print("No subgroups, using fof position", fof_i)
+            center_i = fof_pos[i]
 
-        if c_converged and d_converged:
-            # check for duplicates on same node, still need to check for duplicates
-            #  across all nodes
-            duplicate = False
-            for i in range(np.max((0, len(centers_s) - check_dup_len)), len(centers_s)):
-                if np.linalg.norm(centers_s[i] - center_s) < radii[i] + radius:
-                    print("r {} i {}  Skipping duplicate:".format(rank,i), centers_s[i], center_s)
-                    duplicate = True
-                    break
-            if not duplicate:
+            # ignore centers too close to box boundary
+            if np.sum(center_i < 2) or np.sum(center_i > pd.box_size - 2):
+                print("Skipping:", center_i, "too close to boundary")
+                continue
+            
+            center, radius, n, c_conv, d_conv = critical_shell(pd.pos[pos_indicies], 
+                    center_i, pd.part_mass, crit_dens_a100)
+
+            if c_conv and d_conv:
                 print("Found halo:", center, radius)
                 radii.append(radius)
-                centers_s.append(center_s)
-                halos_found += 1
-        else:
-            print("Did not converge:", "center" if not c_converged else '',
-                    "density" if not d_converged else '')
+                centers.append(center)
+            else:
+                print_conv_error(c_conv, d_conv, fof_i)
+
+        # process subgroups
+        for j in range(fof_sh_num[i]):
+            # overall index of subgroup
+            sh_i = sh_offsets[fof_i] + j
+            center_i = sh_pos[sh_i]
+
+            # ignore centers too close to box boundary
+            if np.sum(center_i < 2) or np.sum(center_i > pd.box_size - 2):
+                print("Skipping:", center_i, "too close to boundary")
+                continue
+
+            # check if initial center is within a sphere already found
+            dup = check_duplicate(centers, radii, center_i, check_dup_len=j)
+            if dup != -1:
+                print_dup_error(fof_i, j, centers[dup], radii[dup])
+                continue
+
+            center, radius, n, c_conv, d_conv = critical_shell(pd.pos[pos_indicies], 
+                    center_i, pd.part_mass, crit_dens_a100)
+
+            # check if final center is within a sphere already found
+            dup = check_duplicate(centers, radii, center, radius=radius, check_dup_len=j)
+            if dup != -1:
+                print_dup_error(fof_i, j, centers[dup], radii[dup])
+                continue
+
+            if c_conv and d_conv:
+                print("Found halo:", center, radius)
+                radii.append(radius)
+                centers.append(center)
+            else:
+                print_conv_error(c_conv, d_conv, fof_i)
 
     
-    centers = np.array(centers_s, dtype=np.float64)
+    # TODO: clean up gathering final data
+    centers = np.array(centers, dtype=np.float64)
     radii = np.array(radii, dtype=np.float64)
     length = np.array(len(centers))
 
@@ -168,31 +221,25 @@ if __name__ == "__main__":
 
     displ_c = None
     displ_r = None
-    recvbuf_c = None
-    recvbuf_r = None
+    all_centers = None
+    all_radii = None
     if rank == 0:
         displ_c = np.array([sum(lengths_c[:r]) for r in range(n_ranks)])
         displ_r = np.array([sum(lengths_r[:r]) for r in range(n_ranks)])
-        recvbuf_c = np.zeros((total_length,3))
-        recvbuf_r = np.zeros(total_length)
+        all_centers = np.zeros((total_length,3))
+        all_radii = np.zeros(total_length)
 
     comm.Barrier()
 
     # Gather all data together on node 0
-    comm.Gatherv(centers, [recvbuf_c, lengths_c, displ_c, MPI.DOUBLE], root=0)
-    comm.Gatherv(radii, [recvbuf_r, lengths_r, displ_r, MPI.DOUBLE], root=0)
+    comm.Gatherv(centers, [all_centers, lengths_c, displ_c, MPI.DOUBLE], root=0)
+    comm.Gatherv(radii, [all_radii, lengths_r, displ_r, MPI.DOUBLE], root=0)
 
     if rank == 0:
-        # need to check for duplicates
-        print("Checking for duplicates")
+        print("Finished, {} spherical halos found".format(len(all_radii)))
+        masses = get_mass(all_radii, 2*crit_dens_a100, a=100)
+        data = {"centers":all_centers, "radii":all_radii, "masses":masses}
 
-
-        print("Finished, {} spherical halos found".format(len(recvbuf_r)))
-        masses = get_mass(recvbuf_r, crit_dens_a100, a=100)
-        data = {"centers":recvbuf_c, "radii":recvbuf_r, "masses":masses}
-        #fname_min = "None" if not min_mass else "{:.1e}".format(min_mass).replace('+','') 
-        #fname_max = "None" if not max_mass else "{:.1e}".format(max_mass).replace('+','')
-        file = open("spherical_halos_mpi", "wb")
-        pickle.dump(data, file)
-        file.close()
+        with open(data_dir + "-analysis/spherical_halos_mpi", "wb") as f:
+            pickle.dump(data, f)
 
