@@ -1,0 +1,6 @@
+numpy
+mpi4py
+astropy
+h5py
+pyfof
+numba
