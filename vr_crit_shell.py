@@ -10,20 +10,21 @@ import snapshot
 
 @jit(nopython=True)
 def find_first(value, vector):
-    """return the index of the first occurence of value in vector"""
+    """Find the index of the first occurence of value in vector."""
     for i, v in enumerate(vector):
         if value == v:
             return i
     return -1
 
-def vr_physical(cosmo, pos, vel, scale_factor):
-    pos_physical = pos / cosmo.h * scale_factor
-    vel_peculiar = np.sqrt(scale_factor) * vel
-    radii = np.linalg.norm(pos, axis=1)
-    unit_vectors = pos / np.expand_dims(radii, 1)
-    vr_peculiar = np.multiply(vel_peculiar, unit_vectors).sum(1)
-    hubble_flow = cosmo.H(1/scale_factor - 1) * radii
-    return vr_peculiar + hubble_flow
+@jit(nopython=True)
+def find_first_npositive(vector):
+    """Find index of first non-positive value in vector."""
+    prod = 1
+    for i, v in enumerate(vector):
+        prod *= v
+        if prod <= 0:
+            break
+    return i
 
 
 if __name__ == "__main__":
@@ -33,7 +34,8 @@ if __name__ == "__main__":
     n_ranks = comm.Get_size()
 
     # read particle data on all processes
-    particles = snapshot.ParticleData("/projects/caps/aaronjo2/dm-l256-n256-a100/snapshot_021.hdf5")
+    data_dir = "/projects/caps/aaronjo2/dm-l256-n256-a100"
+    particles = snapshot.ParticleData(data_dir + "/snapshot_021.hdf5")
 
     cosmo = FlatLambdaCDM(H0=particles.Hubble0, Om0=particles.OmegaMatter)
 
@@ -43,7 +45,7 @@ if __name__ == "__main__":
 
     # read all halo data on rank 0 and divide up work
     if rank == 0:
-        with open("spherical_halos_mpi", 'rb') as f:
+        with open(data_dir + "-analysis/spherical_halos_mpi", 'rb') as f:
             data = pickle.load(f)
         all_centers = data["centers"]
         all_radii = data["radii"]
@@ -69,10 +71,10 @@ if __name__ == "__main__":
     for i in range(len(radii)):
         time_start = time.perf_counter()
 
-        center = centers[i] #/ cosmo.h
+        center = centers[i]
         radius = radii[i] / cosmo.h 
         r_cut = 1.5 * radius
-        #p_radii = np.sqrt(np.sum((particles.pos / cosmo.h - center)**2, axis=1))
+        # calculate physical radial velocities of particles inside r_cut
         p_radii = np.linalg.norm(particles.pos - center, axis=1) / cosmo.h
         mask = p_radii < r_cut
         vel_center = np.mean(particles.vel[p_radii < radius], axis=0)
@@ -107,6 +109,6 @@ if __name__ == "__main__":
         
     if rank == 0:
         print("Gathered")
-        with open("vr_crit_radii", 'wb') as f:
+        with open(data_dir + "-analysis/vr_crit_radii", 'wb') as f:
             pickle.dump(all_radii_vr, f)
 

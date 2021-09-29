@@ -11,12 +11,13 @@ if __name__ == "__main__":
     rank = comm.Get_rank()
     n_ranks = comm.Get_size()
 
-    particles = snapshot.ParticleData("/projects/caps/aaronjo2/dm-l256-n256-a100/snapshot_021.hdf5")
+    data_dir = "/projects/caps/aaronjo2/dm-l256-n256-a100"
+    particles = snapshot.ParticleData(data_dir + "/snapshot_021.hdf5")
 
     cosmo = FlatLambdaCDM(H0=particles.Hubble0, Om0=particles.OmegaMatter)
 
     if rank == 0:
-        with open("spherical_halos_mpi", 'rb') as f:
+        with open(data_dir + "-analysis/spherical_halos_mpi", 'rb') as f:
             data = pickle.load(f)
         all_centers = data["centers"]
         all_radii = data["radii"]
@@ -78,6 +79,6 @@ if __name__ == "__main__":
 
     if rank == 0:
         stats = {"avg":all_avg_vr, "std":all_std_vr, "n":all_n_parts}
-        with open("vr_stats", 'wb') as f:
+        with open(data_dir + "-analysis/vr_stats", 'wb') as f:
             pickle.dump(stats, f)
 
