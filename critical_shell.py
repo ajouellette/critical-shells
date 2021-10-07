@@ -123,15 +123,19 @@ if __name__ == "__main__":
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     n_ranks = comm.Get_size()
+
+    np.random.seed(10)
     
     data_dir = "/projects/caps/aaronjo2/dm-l256-n256-a100"
-    pd = snapshot.ParticleData(data_dir + "/snapshot_021.hdf5")
+    snap_num = "021"
+
+    pd = snapshot.ParticleData(data_dir + "/snapshot_"+snap_num+".hdf5")
     
     # Use H0 = 100 to factor out h, calculate critical density
     cosmo = FlatLambdaCDM(H0=100, Om0=pd.OmegaMatter)
     crit_dens_a100 = cosmo.critical_density(-0.99).to(u.Msun / u.Mpc**3).value
 
-    fof_tab_data = h5py.File(data_dir + "/fof_subhalo_tab_021.hdf5", 'r')
+    fof_tab_data = h5py.File(data_dir + "/fof_subhalo_tab_"+snap_num+".hdf5", 'r')
 
     if rank == 0:
         fof_pos_all = fof_tab_data["Group"]["GroupPos"][:]
@@ -190,8 +194,9 @@ if __name__ == "__main__":
         print("{} Processing FoF group {}, {} subgroups".format(rank, fof_i, fof_sh_num[i])) 
     
         # only use subset of all positions to speed up critical shell search
-        pos_indicies = np.hstack((np.arange(group_offsets[fof_i], group_ends[fof_i]),
-            np.arange(outer_fuzz_start, len(pd.pos))))
+        # cube 4 Mpc across, centered on FoF group
+        cubic_mask = np.product(np.abs(pos - fof_pos[fof_i]) < 2, axis=1, dtype=bool) 
+        pos_cut = pd.pos[cubic_mask]
 
         # fof group with no subgroups
         if fof_sh_num[i] == 0:
@@ -203,8 +208,8 @@ if __name__ == "__main__":
                 print("Skipping:", center_i, "too close to boundary")
                 continue
             
-            center, radius, n, c_conv, d_conv = critical_shell(pd.pos[pos_indicies], 
-                    center_i, pd.part_mass, crit_dens_a100)
+            center, radius, n, c_conv, d_conv = critical_shell(pos_cut, center_i,
+                    pd.part_mass, crit_dens_a100)
 
             if c_conv and d_conv:
                 print("Found halo:", center, radius)
@@ -230,8 +235,8 @@ if __name__ == "__main__":
                 print_dup_error(fof_i, j, centers[dup], radii[dup])
                 continue
 
-            center, radius, n, c_conv, d_conv = critical_shell(pd.pos[pos_indicies], 
-                    center_i, pd.part_mass, crit_dens_a100)
+            center, radius, n, c_conv, d_conv = critical_shell(pos_cut, center_i,
+                    pd.part_mass, crit_dens_a100)
 
             # check if final center is within a sphere already found
             dup = check_duplicate(centers, radii, center, radius=radius, check_dup_len=j)
