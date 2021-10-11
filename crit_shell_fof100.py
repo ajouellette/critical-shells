@@ -2,6 +2,8 @@ import numpy as np
 from mpi4py import MPI
 import pickle
 import h5py
+import os
+import sys
 import pyfof
 
 
@@ -11,10 +13,21 @@ if __name__ == "__main__":
     rank = comm.Get_rank()
     n_ranks = comm.Get_size()
 
-    data_dir = "/projects/caps/aaronjo2/dm-l256-n256-a100"
+    if len(sys.argv) != 3:
+        if rank == 0:
+            print("Error: need data dir and snapshot number")
+        sys.exit(1)
+
+    data_dir = sys.argv[1]
+    snap_num = sys.argv[2]
+    snap_file = data_dir + "/snapshot_" + snap_num + ".hdf5"
+    if not os.path.exists(snap_file):
+        if rank == 0:
+            print("Error: could not find data file")
+        sys.exit(1)
 
     # read particle data on all processes
-    with h5py.File(data_dir + "/snapshot_021.hdf5") as f:  # a = 100
+    with h5py.File(snap_file) as f:  # a = 100
         pos = f["PartType1"]["Coordinates"][:]
 
     # read all halo data on rank 0 and divide up work

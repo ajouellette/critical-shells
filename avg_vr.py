@@ -2,6 +2,8 @@ import numpy as np
 from mpi4py import MPI
 from astropy.cosmology import FlatLambdaCDM
 import pickle
+import os
+import sys
 import snapshot
 
 
@@ -11,9 +13,20 @@ if __name__ == "__main__":
     rank = comm.Get_rank()
     n_ranks = comm.Get_size()
 
-    data_dir = "/projects/caps/aaronjo2/dm-l256-n256-a100"
-    particles = snapshot.ParticleData(data_dir + "/snapshot_021.hdf5")
+    if len(sys.argv) != 3:
+        if rank == 0:
+            print("Error: need data dir and snapshot number")
+        sys.exit(1)
 
+    data_dir = sys.argv[1]
+    snap_num = sys.argv[2]
+    snap_file = data_dir + "/snapshot_" + snap_num + ".hdf5"
+    if not os.path.exists(snap_file):
+        if rank == 0:
+            print("Error: could not find data file")
+        sys.exit(1)
+
+    particles = snapshot.ParticleData(snap_file)
     cosmo = FlatLambdaCDM(H0=particles.Hubble0, Om0=particles.OmegaMatter)
 
     if rank == 0:

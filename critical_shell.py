@@ -5,6 +5,7 @@ import astropy.units as u
 import pickle
 import h5py
 import sys
+import os
 import snapshot
 
 
@@ -60,7 +61,7 @@ def critical_shell(pos, center, part_mass, crit_dens, crit_ratio=2, center_tol=1
     center_converged: bool
     density_converged: bool
     """
-    radius = 0.05
+    radius = 5e-3
     # find center of largest substructure
     center_converged = False
     for i in range(20):
@@ -70,7 +71,7 @@ def critical_shell(pos, center, part_mass, crit_dens, crit_ratio=2, center_tol=1
             center_converged = True
             break
         center = new_center
-        radius += 0.05
+        radius += 5e-3
 
     # decrease radius and then grow to get critical shell
     radius = 5e-4
@@ -80,6 +81,8 @@ def critical_shell(pos, center, part_mass, crit_dens, crit_ratio=2, center_tol=1
     density_converged = False
     while dr > rcrit_tol:
         iters += 1
+        if np.sum(radii < radius+dr) < 2:
+            dr *= 2
         new_center = center + np.mean(pos[radii < radius + dr] - center, axis=0)
         new_radii = np.sqrt(np.sum((pos - new_center)**2, axis=1))
         density = get_density(new_radii, radius+dr, part_mass, a=100)
