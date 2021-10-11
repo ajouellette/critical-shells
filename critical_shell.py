@@ -4,6 +4,7 @@ from astropy.cosmology import FlatLambdaCDM
 import astropy.units as u
 import pickle
 import h5py
+import sys
 import snapshot
 
 
@@ -72,7 +73,7 @@ def critical_shell(pos, center, part_mass, crit_dens, crit_ratio=2, center_tol=1
         radius += 0.05
 
     # decrease radius and then grow to get critical shell
-    radius = 1e-3
+    radius = 5e-4
     radii = np.sqrt(np.sum((pos - center)**2, axis=1))
     dr = rcrit_tol * 100
     iters = i
@@ -83,7 +84,7 @@ def critical_shell(pos, center, part_mass, crit_dens, crit_ratio=2, center_tol=1
         new_radii = np.sqrt(np.sum((pos - new_center)**2, axis=1))
         density = get_density(new_radii, radius+dr, part_mass, a=100)
 
-        if density < crit_ratio * crit_dens:
+        if density < crit_ratio * crit_dens and density > 0:
             dr /= 2
         else:
             center = new_center
@@ -125,17 +126,28 @@ if __name__ == "__main__":
     n_ranks = comm.Get_size()
 
     np.random.seed(10)
-    
-    data_dir = "/projects/caps/aaronjo2/dm-l256-n256-a100"
-    snap_num = "021"
 
-    pd = snapshot.ParticleData(data_dir + "/snapshot_"+snap_num+".hdf5")
+    if len(sys.argv) != 3:
+        if rank == 0:
+            print("Error: need data dir and snapshot number")
+        sys.exit(1)
+    
+    data_dir = sys.argv[1]
+    snap_num = sys.argv[2]
+    snap_file = data_dir + "/snapshot_"+snap_num+".hdf5"
+    fof_file = data_dir + "/fof_subhalo_tab_"+snap_num+".hdf5"
+    if not (os.path.exists(snap_file) and os.path.exists(fof_file)):
+        if rank == 0:
+            print("Error: data files not found")
+        sys.exit(1)
+
+    pd = snapshot.ParticleData(snap_file)
     
     # Use H0 = 100 to factor out h, calculate critical density
     cosmo = FlatLambdaCDM(H0=100, Om0=pd.OmegaMatter)
     crit_dens_a100 = cosmo.critical_density(-0.99).to(u.Msun / u.Mpc**3).value
 
-    fof_tab_data = h5py.File(data_dir + "/fof_subhalo_tab_"+snap_num+".hdf5", 'r')
+    fof_tab_data = h5py.File(fof_file, 'r')
 
     if rank == 0:
         fof_pos_all = fof_tab_data["Group"]["GroupPos"][:]
@@ -145,11 +157,6 @@ if __name__ == "__main__":
 
     sh_pos = fof_tab_data["Subhalo"]["SubhaloPos"][:]
     sh_offsets = fof_tab_data["Group"]["GroupFirstSub"][:]
-
-    group_offsets = fof_tab_data["Group"]["GroupOffsetType"][:,1]
-    group_lens = fof_tab_data["Group"]["GroupLen"][:]
-    group_ends = group_offsets + group_lens
-    outer_fuzz_start = group_ends[-1]
 
     fof_tab_data.close()
 
@@ -195,7 +202,7 @@ if __name__ == "__main__":
     
         # only use subset of all positions to speed up critical shell search
         # cube 4 Mpc across, centered on FoF group
-        cubic_mask = np.product(np.abs(pos - fof_pos[fof_i]) < 2, axis=1, dtype=bool) 
+        cubic_mask = np.product(np.abs(pd.pos - fof_pos[i]) < 2, axis=1, dtype=bool) 
         pos_cut = pd.pos[cubic_mask]
 
         # fof group with no subgroups
@@ -284,6 +291,6 @@ if __name__ == "__main__":
         masses = get_mass(all_radii, 2*crit_dens_a100, a=100)
         data = {"centers":all_centers, "radii":all_radii, "masses":masses}
 
-        with open(data_dir + "-analysis/spherical_halos_mpi", "wb") as f:
+        with open(data_dir + "-analysis/spherical_halos_mpi_new", "wb") as f:
             pickle.dump(data, f)
 
