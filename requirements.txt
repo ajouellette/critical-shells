@@ -1,6 +1,7 @@
 numpy
+scipy
+numba
+h5py
 mpi4py
 astropy
-h5py
 pyfof
-numba
