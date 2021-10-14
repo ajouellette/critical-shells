@@ -196,6 +196,7 @@ if __name__ == "__main__":
 
     radii = []
     centers = []
+    n_parts = []
 
     for i in range(len(fof_pos)):
     
@@ -225,6 +226,7 @@ if __name__ == "__main__":
                 print("Found halo:", center, radius)
                 radii.append(radius)
                 centers.append(center)
+                n_parts.append(n)
             else:
                 print_conv_error(c_conv, d_conv, fof_i)
 
@@ -258,6 +260,7 @@ if __name__ == "__main__":
                 print("Found halo:", center, radius)
                 radii.append(radius)
                 centers.append(center)
+                n_parts.append(n)
             else:
                 print_conv_error(c_conv, d_conv, fof_i)
 
@@ -265,6 +268,7 @@ if __name__ == "__main__":
     # TODO: clean up gathering final data
     centers = np.array(centers, dtype=np.float64)
     radii = np.array(radii, dtype=np.float64)
+    n_parts = np.array(n_parts)
     length = np.array(len(centers))
 
     total_length = np.array(0)
@@ -277,23 +281,35 @@ if __name__ == "__main__":
     displ_r = None
     all_centers = None
     all_radii = None
+    all_n_parts = None
     if rank == 0:
         displ_c = np.array([sum(lengths_c[:r]) for r in range(n_ranks)])
         displ_r = np.array([sum(lengths_r[:r]) for r in range(n_ranks)])
         all_centers = np.zeros((total_length,3))
         all_radii = np.zeros(total_length)
+        all_n_parts = np.zeros(total_length, dtype=int)
 
     comm.Barrier()
 
     # Gather all data together on node 0
     comm.Gatherv(centers, [all_centers, lengths_c, displ_c, MPI.DOUBLE], root=0)
     comm.Gatherv(radii, [all_radii, lengths_r, displ_r, MPI.DOUBLE], root=0)
+    comm.Gatherv(n_parts, [all_n_parts, lengths_r, displ_r, MPI.LONG], root=0)
 
     if rank == 0:
+        filter_n = True
         print("Finished, {} spherical halos found".format(len(all_radii)))
-        masses = get_mass(all_radii, 2*crit_dens_a100, a=100)
+        min_n = 10
+        n_cut = all_n_parts >= 10
+        print("{} spherical halos found with more than {} particles".format(np.sum(n_cut), min_n))
+        if filter_n:
+            print("Saving filtered catalog")
+            all_centers = all_centers[n_cut]
+            all_radii = all_radii[n_cut]
+            all_n_parts = all_n_parts[n_cut]
+            
+        masses = pd.part_mass * all_n_parts
         data = {"centers":all_centers, "radii":all_radii, "masses":masses}
 
-        with open(data_dir + "-analysis/spherical_halos_mpi_new", "wb") as f:
+        with open(data_dir + "-analysis/spherical_halos_mpi", "wb") as f:
             pickle.dump(data, f)
-
