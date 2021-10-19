@@ -1,5 +1,6 @@
 import h5py
 import numpy as np
+import utils
 
 # Assumptions about GADGET hdf5 file:
 #   single snapshot file contains all output data for given step
@@ -8,6 +9,11 @@ import numpy as np
 #   default code units: Mpc, km/s, 1e10 Msun
 #   only dark matter particles - PartType1
 #   all particles have the same mass
+
+# Note: all data loaded directly into memory
+#   might be a problem with very large simulations
+# For a 256**3 particle sim in single precision a ParticleData object will use ~0.44GB
+#  a 512**3 particle sim will use ~3.5GB
 
 class Snapshot:
 
@@ -25,7 +31,20 @@ class Snapshot:
         self.Hubble0 = self._hdf["Parameters"].attrs["Hubble"] * self._hdf["Parameters"].attrs["HubbleParam"]
         self.Hubble = self.Hubble0 * np.sqrt(self.OmegaMatter * self.a**-3 + (1-self.OmegaMatter-self.OmegaLambda) * self.a**-2 + self.OmegaLambda)
 
+    def recenter(self, center):
+        # keep track of total movement to be able to move back to original center
+        self._dx += center
+        dx = utils.wrap_pbc(center, self.box_size)
+        self.pos -= dx
+        utils.wrap_pbc(self.pos, self.box_size, in_place=True)
 
+    def recenter_original(self):
+        utils.wrap_pbc(self._dx, self.box_size, in_place=True)
+        self.pos += self._dx
+        self.pos += self.box_size*(self.pos <= 0) - self.box_size*(self.pos > self.box_size)
+        self._dx = np.zeros(3)
+
+        
 class ParticleData(Snapshot):
 
     def __init__(self, fname):
@@ -38,6 +57,8 @@ class ParticleData(Snapshot):
         self.ids = self._hdf["PartType1"]["ParticleIDs"][:]
 
         self._hdf.close()
+
+        self._dx = np.zeros(3)
 
     def select_ids(self, ids):
         """Return indicies of particles given list of ids."""
