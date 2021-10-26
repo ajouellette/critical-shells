@@ -6,7 +6,6 @@ import pickle
 import h5py
 import sys
 import os
-import snapshot
 
 
 def get_density(radii, cut_radius, part_mass, a=1):
@@ -144,6 +143,7 @@ if __name__ == "__main__":
             print("Error: data files not found")
         sys.exit(1)
 
+    # load particle data
     with h5py.File(snap_file) as f:
         box_size = f["Header"].attrs["BoxSize"]
         Om0 = f["Parameters"].attrs["Omega0"]
@@ -154,6 +154,7 @@ if __name__ == "__main__":
     cosmo = FlatLambdaCDM(H0=100, Om0=Om0)
     crit_dens_a100 = cosmo.critical_density(-0.99).to(u.Msun / u.Mpc**3).value
 
+    # load FoF group data
     with h5py.File(fof_file) as fof_tab_data:
         if rank == 0:
             fof_pos_all = fof_tab_data["Group"]["GroupPos"][:]
@@ -166,8 +167,10 @@ if __name__ == "__main__":
 
     if rank == 0:
         # some debug info
-        print("Critical density at a = 100: {:.3e}".format(crit_dens_a100))
-        print("Particle mass: {:.3e}".format(part_mass))
+        print(f"Critical density at a = 100: {crit_dens_a100:.3e}")
+        print(f"Particle mass: {part_mass:.3e}")
+        print(f"Processing {len(fof_pos_all)} on {n_ranks} MPI ranks" + \
+                f", {len(fof_pos_all)//n_ranks} per rank")
 
         avg, res = divmod(len(fof_pos_all), n_ranks)
         count = np.array([avg+1 if r < res else avg for r in range(n_ranks)])
@@ -202,7 +205,7 @@ if __name__ == "__main__":
 
         # overall unshuffled index of fof group
         fof_i = shuffle[sum(count[:rank]) + i]
-        print("{} Processing FoF group {}, {} subgroups".format(rank, fof_i, fof_sh_num[i]))
+        print(f"{rank} Processing FoF group {fof_i}, {fof_sh_num[i]} subgroups")
 
         # only use subset of all positions to speed up critical shell search
         # cube 4 Mpc across, centered on FoF group
@@ -298,10 +301,10 @@ if __name__ == "__main__":
 
     if rank == 0:
         filter_n = True
-        print("Finished, {} spherical halos found".format(len(all_radii)))
+        print(f"Finished, {len(all_radii)} spherical halos found")
         min_n = 10
         n_cut = all_n_parts >= 10
-        print("{} spherical halos found with more than {} particles".format(np.sum(n_cut), min_n))
+        print(f"{np.sum(n_cut)} spherical halos found with more than {min_n} particles")
         if filter_n:
             print("Saving filtered catalog")
             all_centers = all_centers[n_cut]
