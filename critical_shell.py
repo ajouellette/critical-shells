@@ -11,13 +11,13 @@ import snapshot
 
 def get_density(radii, cut_radius, part_mass, a=1):
     """Calculate density of particles enclosed by a radius.
-    
+
     Parameters:
     radii: ndarray (n,) - Array of all particle radii
     cut_radius: float - Radius of shell
     part_mass: float - Particle mass
     a: float, optional - Scale factor
-    
+
     Returns:
     density: float
     """
@@ -28,7 +28,7 @@ def get_density(radii, cut_radius, part_mass, a=1):
 
 def get_mass(radius, density, a=1):
     """Calculate mass enclosed by a spherical shell.
-    
+
     Parameters:
     radius: float or ndarray - Radius of shell
     density: float or ndarray - Density of shell
@@ -43,7 +43,7 @@ def get_mass(radius, density, a=1):
 
 def critical_shell(pos, center, part_mass, crit_dens, crit_ratio=2, center_tol=1e-3, rcrit_tol=5e-4, maxiters=100):
     """Find a critical shell starting from given center.
-    
+
     Parameters:
     pos: ndarray (n,3) - Positions of all particles
     center: ndarray (1,3) - Initial guess for center of shell
@@ -95,7 +95,7 @@ def critical_shell(pos, center, part_mass, crit_dens, crit_ratio=2, center_tol=1
             radius += dr
         if iters > maxiters:
             break
-    
+
     # number of particles
     n_parts = np.sum(new_radii < radius)
 
@@ -134,7 +134,7 @@ if __name__ == "__main__":
         if rank == 0:
             print("Error: need data dir and snapshot number")
         sys.exit(1)
-    
+
     data_dir = sys.argv[1]
     snap_num = sys.argv[2]
     snap_file = data_dir + "/snapshot_"+snap_num+".hdf5"
@@ -144,31 +144,31 @@ if __name__ == "__main__":
             print("Error: data files not found")
         sys.exit(1)
 
-    pd = snapshot.ParticleData(snap_file)
-    
+    with h5py.File(snap_file) as f:
+        box_size = f["Header"].attrs["BoxSize"]
+        Om0 = f["Parameters"].attrs["Omega0"]
+        part_mass = f["Header"].attrs["MassTable"][1] * 1e10
+        pos = f["PartType1"]["Coordinates"][:]
+
     # Use H0 = 100 to factor out h, calculate critical density
-    cosmo = FlatLambdaCDM(H0=100, Om0=pd.OmegaMatter)
+    cosmo = FlatLambdaCDM(H0=100, Om0=Om0)
     crit_dens_a100 = cosmo.critical_density(-0.99).to(u.Msun / u.Mpc**3).value
 
-    fof_tab_data = h5py.File(fof_file, 'r')
+    with h5py.File(fof_file) as fof_tab_data:
+        if rank == 0:
+            fof_pos_all = fof_tab_data["Group"]["GroupPos"][:]
+            fof_sh_num_all = fof_tab_data["Group"]["GroupNsubs"][:]
+
+        comm.Barrier()
+
+        sh_pos = fof_tab_data["Subhalo"]["SubhaloPos"][:]
+        sh_offsets = fof_tab_data["Group"]["GroupFirstSub"][:]
 
     if rank == 0:
-        fof_pos_all = fof_tab_data["Group"]["GroupPos"][:]
-        fof_sh_num_all = fof_tab_data["Group"]["GroupNsubs"][:]
-
-    comm.Barrier()
-
-    sh_pos = fof_tab_data["Subhalo"]["SubhaloPos"][:]
-    sh_offsets = fof_tab_data["Group"]["GroupFirstSub"][:]
-
-    fof_tab_data.close()
-
-    # some debug info
-    if rank == 0:
+        # some debug info
         print("Critical density at a = 100: {:.3e}".format(crit_dens_a100))
-        print("Particle mass: {:.3e}".format(pd.part_mass))
+        print("Particle mass: {:.3e}".format(part_mass))
 
-    if rank == 0:
         avg, res = divmod(len(fof_pos_all), n_ranks)
         count = np.array([avg+1 if r < res else avg for r in range(n_ranks)])
         displ = np.array([sum(count[:r]) for r in range(n_ranks)])
@@ -199,15 +199,15 @@ if __name__ == "__main__":
     n_parts = []
 
     for i in range(len(fof_pos)):
-    
+
         # overall unshuffled index of fof group
         fof_i = shuffle[sum(count[:rank]) + i]
-        print("{} Processing FoF group {}, {} subgroups".format(rank, fof_i, fof_sh_num[i])) 
-    
+        print("{} Processing FoF group {}, {} subgroups".format(rank, fof_i, fof_sh_num[i]))
+
         # only use subset of all positions to speed up critical shell search
         # cube 4 Mpc across, centered on FoF group
-        cubic_mask = np.product(np.abs(pd.pos - fof_pos[i]) < 2, axis=1, dtype=bool) 
-        pos_cut = pd.pos[cubic_mask]
+        cubic_mask = np.product(np.abs(pos - fof_pos[i]) < 2, axis=1, dtype=bool)
+        pos_cut = pos[cubic_mask]
 
         # fof group with no subgroups
         if fof_sh_num[i] == 0:
@@ -215,12 +215,12 @@ if __name__ == "__main__":
             center_i = fof_pos[i]
 
             # ignore centers too close to box boundary
-            if np.sum(center_i < 2) or np.sum(center_i > pd.box_size - 2):
+            if np.sum(center_i < 2) or np.sum(center_i > box_size - 2):
                 print("Skipping:", center_i, "too close to boundary")
                 continue
-            
+
             center, radius, n, c_conv, d_conv = critical_shell(pos_cut, center_i,
-                    pd.part_mass, crit_dens_a100)
+                    part_mass, crit_dens_a100)
 
             if c_conv and d_conv:
                 print("Found halo:", center, radius)
@@ -237,7 +237,7 @@ if __name__ == "__main__":
             center_i = sh_pos[sh_i]
 
             # ignore centers too close to box boundary
-            if np.sum(center_i < 2) or np.sum(center_i > pd.box_size - 2):
+            if np.sum(center_i < 2) or np.sum(center_i > box_size - 2):
                 print("Skipping:", center_i, "too close to boundary")
                 continue
 
@@ -248,7 +248,7 @@ if __name__ == "__main__":
                 continue
 
             center, radius, n, c_conv, d_conv = critical_shell(pos_cut, center_i,
-                    pd.part_mass, crit_dens_a100)
+                    part_mass, crit_dens_a100)
 
             # check if final center is within a sphere already found
             dup = check_duplicate(centers, radii, center, radius=radius, check_dup_len=j)
@@ -264,7 +264,7 @@ if __name__ == "__main__":
             else:
                 print_conv_error(c_conv, d_conv, fof_i)
 
-    
+
     # TODO: clean up gathering final data
     centers = np.array(centers, dtype=np.float64)
     radii = np.array(radii, dtype=np.float64)
@@ -307,8 +307,8 @@ if __name__ == "__main__":
             all_centers = all_centers[n_cut]
             all_radii = all_radii[n_cut]
             all_n_parts = all_n_parts[n_cut]
-            
-        masses = pd.part_mass * all_n_parts
+
+        masses = part_mass * all_n_parts
         data = {"centers":all_centers, "radii":all_radii, "masses":masses}
 
         with open(data_dir + "-analysis/spherical_halos_mpi", "wb") as f:
