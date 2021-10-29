@@ -1,13 +1,20 @@
+import os
+import sys
+import pickle
 import numpy as np
+import numba
 from mpi4py import MPI
 from astropy.cosmology import FlatLambdaCDM
 import astropy.units as u
-import pickle
 import h5py
-import sys
-import os
+
+import cProfile
+
+pr = cProfile.Profile()
+profile = False
 
 
+@numba.jit(nopython=True)
 def get_density(radii, cut_radius, part_mass, a=1):
     """Calculate density of particles enclosed by a radius.
 
@@ -40,7 +47,14 @@ def get_mass(radius, density, a=1):
     return density * volume
 
 
-def critical_shell(pos, center, part_mass, crit_dens, crit_ratio=2, center_tol=1e-3, rcrit_tol=5e-4, maxiters=100):
+@numba.jit(nopython=True)
+def mean_pos(pos):
+    """Calculate mean position (mean over axis 0)."""
+    return np.sum(pos, axis=0) / len(pos)
+
+
+@numba.jit(nopython=True)
+def critical_shell(pos, center, part_mass, crit_dens, crit_ratio=2, center_tol=1e-3, rcrit_tol=5e-4, maxiters=100, findCOM=True):
     """Find a critical shell starting from given center.
 
     Parameters:
@@ -60,17 +74,19 @@ def critical_shell(pos, center, part_mass, crit_dens, crit_ratio=2, center_tol=1
     center_converged: bool
     density_converged: bool
     """
-    radius = 5e-3
-    # find center of largest substructure
-    center_converged = False
-    for i in range(20):
-        radii = np.sqrt(np.sum((pos - center)**2, axis=1))
-        new_center = np.mean(pos[radii < radius], axis=0)
-        if np.linalg.norm(center - new_center) < center_tol:
-            center_converged = True
-            break
-        center = new_center
-        radius += 5e-3
+    center_converged = True
+    if findCOM:
+        radius = 5e-3
+        center_converged = False
+        # find center of largest substructure
+        for i in range(20):
+            radii = np.sqrt(np.sum((pos - center)**2, axis=1))
+            new_center = mean_pos(pos[radii < radius])
+            if np.linalg.norm(center - new_center) < center_tol:
+                center_converged = True
+                break
+            center = new_center
+            radius += 5e-3
 
     # decrease radius and then grow to get critical shell
     radius = 5e-4
@@ -82,7 +98,7 @@ def critical_shell(pos, center, part_mass, crit_dens, crit_ratio=2, center_tol=1
         iters += 1
         if np.sum(radii < radius+dr) < 2:
             dr *= 2
-        new_center = center + np.mean(pos[radii < radius + dr] - center, axis=0)
+        new_center = center + mean_pos(pos[radii < radius + dr] - center)
         new_radii = np.sqrt(np.sum((pos - new_center)**2, axis=1))
         density = get_density(new_radii, radius+dr, part_mass, a=100)
 
@@ -105,6 +121,12 @@ def critical_shell(pos, center, part_mass, crit_dens, crit_ratio=2, center_tol=1
     return center, radius, n_parts, center_converged, density_converged
 
 
+@numba.jit(nopython=True, parallel=True)
+def get_sphere_mask(pos, center, radius):
+    """Calculate a spherical mask with given center and radius."""
+    return np.sum((pos - center)**2, axis=1) < radius**2
+
+
 def print_conv_error(center_conv, density_conv, fof_i):
     print("Did not converge {}:".format(fof_i), "center" if not c_conv else '',
             "density" if not d_conv else '')
@@ -123,6 +145,9 @@ def check_duplicate(centers, radii, center, radius=0, check_dup_len=10):
 
 
 if __name__ == "__main__":
+    if profile:
+        pr.enable()
+
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     n_ranks = comm.Get_size()
@@ -208,9 +233,8 @@ if __name__ == "__main__":
         print(f"{rank} Processing FoF group {fof_i}, {fof_sh_num[i]} subgroups")
 
         # only use subset of all positions to speed up critical shell search
-        # cube 4 Mpc across, centered on FoF group
-        cubic_mask = np.product(np.abs(pos - fof_pos[i]) < 2, axis=1, dtype=bool)
-        pos_cut = pos[cubic_mask]
+        mask = get_sphere_mask(pos, fof_pos[i], 3)
+        pos_cut = pos[mask]
 
         # fof group with no subgroups
         if fof_sh_num[i] == 0:
@@ -251,7 +275,7 @@ if __name__ == "__main__":
                 continue
 
             center, radius, n, c_conv, d_conv = critical_shell(pos_cut, center_i,
-                    part_mass, crit_dens_a100)
+                    part_mass, crit_dens_a100, findCOM=False)
 
             # check if final center is within a sphere already found
             dup = check_duplicate(centers, radii, center, radius=radius, check_dup_len=j)
@@ -316,3 +340,10 @@ if __name__ == "__main__":
 
         with open(data_dir + "-analysis/spherical_halos_mpi", "wb") as f:
             pickle.dump(data, f)
+
+    if profile:
+        pr.disable()
+        pr.dump_stats('cpu_%d.prof' %rank)
+        with open('cpu_%d.txt' %rank, 'w') as output_file:
+            sys.stdout = output_file
+            pr.print_stats(sort='time')
