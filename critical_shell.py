@@ -2,19 +2,22 @@ import os
 import sys
 import pickle
 import numpy as np
-import numba
+import numba as nb
 from mpi4py import MPI
 from astropy.cosmology import FlatLambdaCDM
 import astropy.units as u
+from sklearn import neighbors
 import h5py
+from utils import mean_pos
 
+import time
 import cProfile
 
 pr = cProfile.Profile()
 profile = False
 
 
-@numba.jit(nopython=True)
+@nb.njit
 def get_density(radii, cut_radius, part_mass, a=1):
     """Calculate density of particles enclosed by a radius.
 
@@ -47,13 +50,7 @@ def get_mass(radius, density, a=1):
     return density * volume
 
 
-@numba.jit(nopython=True)
-def mean_pos(pos):
-    """Calculate mean position (mean over axis 0)."""
-    return np.sum(pos, axis=0) / len(pos)
-
-
-@numba.jit(nopython=True)
+@nb.njit
 def critical_shell(pos, center, part_mass, crit_dens, crit_ratio=2, center_tol=1e-3, rcrit_tol=5e-4, maxiters=100, findCOM=True):
     """Find a critical shell starting from given center.
 
@@ -121,10 +118,12 @@ def critical_shell(pos, center, part_mass, crit_dens, crit_ratio=2, center_tol=1
     return center, radius, n_parts, center_converged, density_converged
 
 
-@numba.jit(nopython=True, parallel=True)
-def get_sphere_mask(pos, center, radius):
-    """Calculate a spherical mask with given center and radius."""
-    return np.sum((pos - center)**2, axis=1) < radius**2
+def check_duplicate(centers, radii, center, radius=0, check_dup_len=10):
+    """Check if a shell is a duplicate or contained within another shell."""
+    for i in range(np.max((0, len(centers) - check_dup_len)), len(centers)):
+        if np.linalg.norm(centers[i] - center) < radii[i] + radius:
+            return i
+    return -1
 
 
 def print_conv_error(center_conv, density_conv, fof_i):
@@ -135,13 +134,6 @@ def print_conv_error(center_conv, density_conv, fof_i):
 def print_dup_error(fof_i, sh_i, center, radius):
     print("Skipping duplicate: fof {}, sh {} ".format(fof_i, sh_i), center, radius)
 
-
-def check_duplicate(centers, radii, center, radius=0, check_dup_len=10):
-    """Check if a shell is a duplicate or contained within another shell."""
-    for i in range(np.max((0, len(centers) - check_dup_len)), len(centers)):
-        if np.linalg.norm(centers[i] - center) < radii[i] + radius:
-            return i
-    return -1
 
 
 if __name__ == "__main__":
@@ -168,12 +160,21 @@ if __name__ == "__main__":
             print("Error: data files not found")
         sys.exit(1)
 
+    time_start = time.perf_counter()
     # load particle data
     with h5py.File(snap_file) as f:
         box_size = f["Header"].attrs["BoxSize"]
         Om0 = f["Parameters"].attrs["Omega0"]
         part_mass = f["Header"].attrs["MassTable"][1] * 1e10
         pos = f["PartType1"]["Coordinates"][:]
+        pos_tree = neighbors.BallTree(pos)
+
+    comm.Barrier()
+    time_end = time.perf_counter()
+    if rank == 0:
+        print(f"Time to construct trees {(time_end - time_start)/60:.2f} minutes")
+        print("Memory usage after tree construction:")
+        os.system("free -h")
 
     # Use H0 = 100 to factor out h, calculate critical density
     cosmo = FlatLambdaCDM(H0=100, Om0=Om0)
@@ -182,8 +183,9 @@ if __name__ == "__main__":
     # load FoF group data
     with h5py.File(fof_file) as fof_tab_data:
         if rank == 0:
-            fof_pos_all = fof_tab_data["Group"]["GroupPos"][:]
-            fof_sh_num_all = fof_tab_data["Group"]["GroupNsubs"][:]
+            load = 1000 if profile else fof_tab_data["Header"].attrs["Ngroups_Total"]
+            fof_pos_all = fof_tab_data["Group"]["GroupPos"][:load]
+            fof_sh_num_all = fof_tab_data["Group"]["GroupNsubs"][:load]
 
         comm.Barrier()
 
@@ -226,14 +228,14 @@ if __name__ == "__main__":
     centers = []
     n_parts = []
 
+    time_start = time.perf_counter()
     for i in range(len(fof_pos)):
-
         # overall unshuffled index of fof group
         fof_i = shuffle[sum(count[:rank]) + i]
         print(f"{rank} Processing FoF group {fof_i}, {fof_sh_num[i]} subgroups")
 
-        # only use subset of all positions to speed up critical shell search
-        mask = get_sphere_mask(pos, fof_pos[i], 3)
+        # find 5Mpc sphere around starting center
+        mask = pos_tree.query_radius(fof_pos[i].reshape(1,-1), 5)[0]
         pos_cut = pos[mask]
 
         # fof group with no subgroups
@@ -317,6 +319,7 @@ if __name__ == "__main__":
         all_n_parts = np.zeros(total_length, dtype=int)
 
     comm.Barrier()
+    time_end = time.perf_counter()
 
     # Gather all data together on node 0
     comm.Gatherv(centers, [all_centers, lengths_c, displ_c, MPI.DOUBLE], root=0)
@@ -325,7 +328,7 @@ if __name__ == "__main__":
 
     if rank == 0:
         filter_n = True
-        print(f"Finished, {len(all_radii)} spherical halos found")
+        print(f"Finished, {len(all_radii)} spherical halos found in {(time_end - time_start)/60:.2f} minutes")
         min_n = 10
         n_cut = all_n_parts >= 10
         print(f"{np.sum(n_cut)} spherical halos found with more than {min_n} particles")
@@ -338,8 +341,9 @@ if __name__ == "__main__":
         masses = part_mass * all_n_parts
         data = {"centers":all_centers, "radii":all_radii, "masses":masses}
 
-        with open(data_dir + "-analysis/spherical_halos_mpi", "wb") as f:
-            pickle.dump(data, f)
+        if not profile:
+            with open(data_dir + "-analysis/spherical_halos_mpi", "wb") as f:
+                pickle.dump(data, f)
 
     if profile:
         pr.disable()
@@ -347,3 +351,4 @@ if __name__ == "__main__":
         with open('cpu_%d.txt' %rank, 'w') as output_file:
             sys.stdout = output_file
             pr.print_stats(sort='time')
+

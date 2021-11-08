@@ -1,13 +1,19 @@
 import numpy as np
+import numba as nb
 
-def vr_physical(pos, vel, Hubble, h=1, a=1, radius=None):
-    """Calculate physical radial velocity given simulation pos and vel
+nb_parallel = True
 
-    Assumes pos and vel are already centered
-    """
-    p_radii = np.linalg.norm(pos, axis=1) / h
-    if not radius:
-        pos_cut 
+
+@nb.njit(parallel=nb_parallel)
+def get_sphere_mask(pos, center, radius):
+    """Calculate a spherical mask with given center and radius."""
+    return np.sum((pos - center)**2, axis=1) < radius**2
+
+
+@nb.njit(parallel=nb_parallel)
+def mean_pos(pos):
+    """Calculate mean position (mean over axis 0)."""
+    return np.sum(pos, axis=0) / len(pos)
 
 
 def wrap_pbc(coords, box_size, in_place=False):
@@ -20,7 +26,7 @@ def wrap_pbc(coords, box_size, in_place=False):
 
 def center_pbc(data, box_size, center_func="mean"):
     """Compute center of a cluster in a periodic box.
-    
+
     Periodic box is assumed to be [0, 2pi]
     """
     if center_func == "mean":
