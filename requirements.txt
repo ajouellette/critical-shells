@@ -1,5 +1,6 @@
 numpy
 scipy
+sklearn
 numba
 h5py
 mpi4py
