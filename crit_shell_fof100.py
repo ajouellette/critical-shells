@@ -1,9 +1,10 @@
-import numpy as np
-from mpi4py import MPI
-import pickle
-import h5py
 import os
 import sys
+import pickle
+import numpy as np
+from mpi4py import MPI
+import h5py
+from sklearn import neighbors
 import pyfof
 
 
@@ -28,7 +29,9 @@ if __name__ == "__main__":
 
     # read particle data on all processes
     with h5py.File(snap_file) as f:  # a = 100
+        box_size = f["Header"].attrs["BoxSize"]
         pos = f["PartType1"]["Coordinates"][:]
+        pos_tree = neighbors.BallTree(pos)
 
     # read all halo data on rank 0 and divide up work
     if rank == 0:
@@ -56,21 +59,25 @@ if __name__ == "__main__":
     n_fof = np.zeros_like(radii, dtype=int)
     ids_fof = []
 
+    # FoF linking length
+    link_len = 0.2 * box_size / len(pos)**(1/3)
+    if rank == 0:
+        print(f"Using FoF linking length {link_len:.2f} Mpc")
+
     for i in range(len(radii)):
         center = centers[i]
-        radius = radii[i] 
-        p_radii = np.linalg.norm(pos - center, axis=1)
-        pos_cut = pos[p_radii<2*radius]
+        radius = radii[i]
+        mask = pos_tree.query_radius(center.reshape(1,-1), 2*radius)[0]
+        pos_cut = pos[mask]
         # run FoF
-        link_len = 0.2
         if len(pos_cut) < 2:
             print("Error not enough particles")
             continue
         groups = pyfof.friends_of_friends(np.double(pos_cut), link_len)
         group_lens = [len(groups[i]) for i in range(len(groups))]
         main_group = np.argmax(group_lens)
-        print("number of groups {} size of main group {} size of crit shell {}".format(len(groups), len(groups[main_group]), np.sum(p_radii<radius)))
-       
+        #print("number of groups {} size of main group {} size of crit shell {}".format(len(groups), len(groups[main_group]), np.sum(p_radii<radius)))
+
         n_fof[i] = len(groups[main_group])
         ids_fof = ids_fof + groups[main_group]
 
@@ -92,10 +99,10 @@ if __name__ == "__main__":
     else:
         all_n_fof = None
         all_ids_fof = None
-        
+
     comm.Gatherv(n_fof, [all_n_fof, count, displ, MPI.LONG], root=0)
     comm.Gatherv(ids_fof, [all_ids_fof, lengths, displ_ids, MPI.LONG], root=0)
-        
+
     if rank == 0:
         print("Gathered")
         data = {"n":all_n_fof, "ids":all_ids_fof}
