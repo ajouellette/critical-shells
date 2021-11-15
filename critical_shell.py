@@ -2,13 +2,11 @@ import os
 import sys
 import pickle
 import numpy as np
-import numba as nb
 from mpi4py import MPI
 from astropy.cosmology import FlatLambdaCDM
 import astropy.units as u
 from sklearn import neighbors
 import h5py
-from utils import mean_pos
 
 import time
 import cProfile
@@ -17,49 +15,28 @@ pr = cProfile.Profile()
 profile = False
 
 
-@nb.njit
-def get_density(radii, cut_radius, part_mass, a=1):
-    """Calculate density of particles enclosed by a radius.
-
-    Parameters:
-    radii: ndarray (n,) - Array of all particle radii
-    cut_radius: float - Radius of shell
-    part_mass: float - Particle mass
-    a: float, optional - Scale factor
-
-    Returns:
-    density: float
-    """
-    num_particles = np.sum(radii < cut_radius)
-    volume = 4/3 * np.pi * (cut_radius * a)**3
-    return num_particles * part_mass / volume
+def sphere_volume(radius, a=1):
+    """Volume of a sphere with an optional scale factor."""
+    return 4/3 * np.pi * (a * radius)**3
 
 
-def get_mass(radius, density, a=1):
-    """Calculate mass enclosed by a spherical shell.
-
-    Parameters:
-    radius: float or ndarray - Radius of shell
-    density: float or ndarray - Density of shell
-    a: float, optional - Scale factor
-
-    Returns:
-    mass: float or ndarray
-    """
-    volume = 4/3 * np.pi * (radius * a)**3
-    return density * volume
+def get_density(pos_tree, center, radius, part_mass):
+    """Get density of a sphere from a tree of particle positions."""
+    n = pos_tree.query_radius(center.reshape(1, -1), radius, count_only=True)[0]
+    return n * part_mass / sphere_volume(radius, a=100)
 
 
-@nb.njit
-def critical_shell(pos, center, part_mass, crit_dens, crit_ratio=2, center_tol=1e-3, rcrit_tol=5e-4, maxiters=100, findCOM=True):
+def find_critical_shell(pos_tree, center, part_mass, crit_dens, crit_ratio=2,
+        center_tol=1e-3, rcrit_tol=1e-5, maxiters=100, findCOM=True):
     """Find a critical shell starting from given center.
 
     Parameters:
-    pos: ndarray (n,3) - Positions of all particles
+    pos_tree: sklearn tree (either KDTree or BallTree) constructed from
+              particle postitions
     center: ndarray (1,3) - Initial guess for center of shell
     part_mass: float - Particle mass
     crit_dens: float - Critical density of universe
-    crit_ratio: float - Ratio of critical shell density to critical density of universe
+    crit_ratio: float - Ratio of critical shell density to critical density
     center_tol: float, optional - Tolerance for center convergence
     rcrit_tol: float, optional - Tolerance for radius convergence
     maxiters: int, optional - Maximum number of iterations
@@ -76,46 +53,67 @@ def critical_shell(pos, center, part_mass, crit_dens, crit_ratio=2, center_tol=1
         radius = 5e-3
         center_converged = False
         # find center of largest substructure
-        for i in range(20):
-            radii = np.sqrt(np.sum((pos - center)**2, axis=1))
-            new_center = mean_pos(pos[radii < radius])
+        for iters in range(1, 20):
+            ind = pos_tree.query_radius(center.reshape(1, -1), radius)[0]
+            if len(ind) == 0:
+                radius += 5e-3
+                continue
+            new_center = np.mean(pos_tree.data.base[ind], axis=0, dtype=float)
             if np.linalg.norm(center - new_center) < center_tol:
                 center_converged = True
                 break
             center = new_center
             radius += 5e-3
+    else:
+        iters = 0
 
-    # decrease radius and then grow to get critical shell
-    radius = 5e-4
-    radii = np.sqrt(np.sum((pos - center)**2, axis=1))
-    dr = rcrit_tol * 100
-    iters = i
+    # initial bracket for radius of critical shell
+    r_low = 5e-4
+    r_high = 0.5
+    density_low = get_density(pos_tree, center, r_low, part_mass)
+    # potentially need a better lower bound if no particles within initial radius
+    while density_low == 0:
+        r_low += 5e-4
+        density_low = get_density(pos_tree, center, r_low, part_mass)
+    density_high = get_density(pos_tree, center, r_high, part_mass)
+
+    # check that guess actually brackets root
+    if not (density_low / crit_dens > crit_ratio and density_high / crit_dens < crit_ratio):
+        print("error initial guesses not good enough",
+                (r_low, density_low / crit_dens), (r_high, density_high / crit_dens))
+        return center, 0, 0, center_converged, False
+
     density_converged = False
-    while dr > rcrit_tol:
-        iters += 1
-        if np.sum(radii < radius+dr) < 2:
-            dr *= 2
-        new_center = center + mean_pos(pos[radii < radius + dr] - center)
-        new_radii = np.sqrt(np.sum((pos - new_center)**2, axis=1))
-        density = get_density(new_radii, radius+dr, part_mass, a=100)
+    for i in range(iters+1, maxiters):
+        r_mid = (r_low + r_high) / 2
+        ind = pos_tree.query_radius(center.reshape(1, -1), r_mid)[0]
+        if len(ind) == 0:
+            break # ideally shouldn't happen, some problem with convergence
+        center = np.mean(pos_tree.data.base[ind], axis=0, dtype=float)
+        density_mid = get_density(pos_tree, center, r_mid, part_mass)
 
-        if density < crit_ratio * crit_dens and density > 0:
-            dr /= 2
+        if density_mid / crit_dens == crit_ratio:
+            density_converged = True
+            break
+
+        if (density_low / crit_dens - crit_ratio) * (density_mid / crit_dens - crit_ratio) < 0:
+            r_high = r_mid
+            density_high = density_mid
+        elif (density_high / crit_dens - crit_ratio) * (density_mid / crit_dens - crit_ratio) < 0:
+            r_low = r_mid
+            density_low = density_mid
         else:
-            center = new_center
-            radii = new_radii
-            radius += dr
-        if iters > maxiters:
+            print("convergence error, this should not happen")
+            return center, r_mid, 0, center_converged, False
+
+        if (r_high - r_low) / 2 < rcrit_tol:
+            density_converged = True
             break
 
     # number of particles
-    n_parts = np.sum(new_radii < radius)
+    n_parts = pos_tree.query_radius(center.reshape(1, -1), r_mid, count_only=True)[0]
 
-    # convergence check (maybe not necessary)
-    if density < crit_ratio * crit_dens and density > crit_dens and dr < rcrit_tol:
-        density_converged = True
-
-    return center, radius, n_parts, center_converged, density_converged
+    return center, r_mid, n_parts, center_converged, density_converged
 
 
 def check_duplicate(centers, radii, center, radius=0, check_dup_len=10):
@@ -126,14 +124,13 @@ def check_duplicate(centers, radii, center, radius=0, check_dup_len=10):
     return -1
 
 
-def print_conv_error(center_conv, density_conv, fof_i):
-    print("Did not converge {}:".format(fof_i), "center" if not c_conv else '',
-            "density" if not d_conv else '')
+def print_conv_error(center_conv, density_conv, fof_i, sh_i=0):
+    print("Did not converge ({}, {}):".format(fof_i, sh_i),
+            "center" if not c_conv else '', "density" if not d_conv else '')
 
 
 def print_dup_error(fof_i, sh_i, center, radius):
     print("Skipping duplicate: fof {}, sh {} ".format(fof_i, sh_i), center, radius)
-
 
 
 if __name__ == "__main__":
@@ -183,7 +180,7 @@ if __name__ == "__main__":
     # load FoF group data
     with h5py.File(fof_file) as fof_tab_data:
         if rank == 0:
-            load = 1000 if profile else fof_tab_data["Header"].attrs["Ngroups_Total"]
+            load = 2000 if profile else fof_tab_data["Header"].attrs["Ngroups_Total"]
             fof_pos_all = fof_tab_data["Group"]["GroupPos"][:load]
             fof_sh_num_all = fof_tab_data["Group"]["GroupNsubs"][:load]
 
@@ -214,7 +211,7 @@ if __name__ == "__main__":
 
     comm.Bcast(count, root=0)
 
-    fof_pos = np.zeros((count[rank],3), dtype=np.float32)
+    fof_pos = np.zeros((count[rank], 3), dtype=np.float32)
     fof_sh_num = np.zeros(count[rank], dtype=np.int32)
 
     comm.Scatterv([fof_pos_all[shuffle], 3*count, 3*displ, MPI.FLOAT], fof_pos)
@@ -227,16 +224,14 @@ if __name__ == "__main__":
     radii = []
     centers = []
     n_parts = []
+    fof_origins = []
+    sh_origins = []
 
     time_start = time.perf_counter()
     for i in range(len(fof_pos)):
         # overall unshuffled index of fof group
         fof_i = shuffle[sum(count[:rank]) + i]
         print(f"{rank} Processing FoF group {fof_i}, {fof_sh_num[i]} subgroups")
-
-        # find 5Mpc sphere around starting center
-        mask = pos_tree.query_radius(fof_pos[i].reshape(1,-1), 5)[0]
-        pos_cut = pos[mask]
 
         # fof group with no subgroups
         if fof_sh_num[i] == 0:
@@ -248,7 +243,7 @@ if __name__ == "__main__":
                 print("Skipping:", center_i, "too close to boundary")
                 continue
 
-            center, radius, n, c_conv, d_conv = critical_shell(pos_cut, center_i,
+            center, radius, n, c_conv, d_conv = find_critical_shell(pos_tree, center_i,
                     part_mass, crit_dens_a100)
 
             if c_conv and d_conv:
@@ -256,6 +251,8 @@ if __name__ == "__main__":
                 radii.append(radius)
                 centers.append(center)
                 n_parts.append(n)
+                fof_origins.append(fof_i)
+                sh_origins.append(0)
             else:
                 print_conv_error(c_conv, d_conv, fof_i)
 
@@ -276,7 +273,7 @@ if __name__ == "__main__":
                 print_dup_error(fof_i, j, centers[dup], radii[dup])
                 continue
 
-            center, radius, n, c_conv, d_conv = critical_shell(pos_cut, center_i,
+            center, radius, n, c_conv, d_conv = find_critical_shell(pos_tree, center_i,
                     part_mass, crit_dens_a100, findCOM=False)
 
             # check if final center is within a sphere already found
@@ -290,14 +287,17 @@ if __name__ == "__main__":
                 radii.append(radius)
                 centers.append(center)
                 n_parts.append(n)
+                fof_origins.append(fof_i)
+                sh_origins.append(sh_i)
             else:
-                print_conv_error(c_conv, d_conv, fof_i)
-
+                print_conv_error(c_conv, d_conv, fof_i, sh_i)
 
     # TODO: clean up gathering final data
     centers = np.array(centers, dtype=np.float64)
     radii = np.array(radii, dtype=np.float64)
     n_parts = np.array(n_parts)
+    fof_origins = np.array(fof_origins)
+    sh_origins = np.array(sh_origins)
     length = np.array(len(centers))
 
     total_length = np.array(0)
@@ -311,12 +311,16 @@ if __name__ == "__main__":
     all_centers = None
     all_radii = None
     all_n_parts = None
+    all_fof_origins = None
+    all_sh_origins = None
     if rank == 0:
         displ_c = np.array([sum(lengths_c[:r]) for r in range(n_ranks)])
         displ_r = np.array([sum(lengths_r[:r]) for r in range(n_ranks)])
-        all_centers = np.zeros((total_length,3))
+        all_centers = np.zeros((total_length, 3))
         all_radii = np.zeros(total_length)
         all_n_parts = np.zeros(total_length, dtype=int)
+        all_fof_origins = np.zeros(total_length, dtype=int)
+        all_sh_origins = np.zeros(total_length, dtype=int)
 
     comm.Barrier()
     time_end = time.perf_counter()
@@ -325,6 +329,8 @@ if __name__ == "__main__":
     comm.Gatherv(centers, [all_centers, lengths_c, displ_c, MPI.DOUBLE], root=0)
     comm.Gatherv(radii, [all_radii, lengths_r, displ_r, MPI.DOUBLE], root=0)
     comm.Gatherv(n_parts, [all_n_parts, lengths_r, displ_r, MPI.LONG], root=0)
+    comm.Gatherv(fof_origins, [all_fof_origins, lengths_r, displ_r, MPI.LONG], root=0)
+    comm.Gatherv(sh_origins, [all_sh_origins, lengths_r, displ_r, MPI.LONG], root=0)
 
     if rank == 0:
         filter_n = True
@@ -337,9 +343,15 @@ if __name__ == "__main__":
             all_centers = all_centers[n_cut]
             all_radii = all_radii[n_cut]
             all_n_parts = all_n_parts[n_cut]
+            all_fof_origins = all_fof_origins[n_cut]
+            all_sh_origins = all_sh_origins[n_cut]
 
         masses = part_mass * all_n_parts
-        data = {"centers":all_centers, "radii":all_radii, "masses":masses}
+        # save data: shell centers, radii, number of particles inside shell,
+        #            total shell mass, parent fof group, parent subhalo
+        data = {"centers": all_centers, "radii": all_radii,
+                "n": all_n_parts, "masses": masses, "fof_i": all_fof_origins,
+                "sh_i": all_sh_origins}
 
         if not profile:
             with open(data_dir + "-analysis/spherical_halos_mpi", "wb") as f:
@@ -347,8 +359,8 @@ if __name__ == "__main__":
 
     if profile:
         pr.disable()
-        pr.dump_stats('cpu_%d.prof' %rank)
-        with open('cpu_%d.txt' %rank, 'w') as output_file:
+        pr.dump_stats('cpu_%d.prof' % rank)
+        with open('cpu_%d.txt' % rank, 'w') as output_file:
             sys.stdout = output_file
             pr.print_stats(sort='time')
 
