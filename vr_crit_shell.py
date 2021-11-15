@@ -5,13 +5,12 @@ import numpy as np
 import numba as nb
 from mpi4py import MPI
 from astropy.cosmology import FlatLambdaCDM
-import astropy.units as u
 from sklearn import neighbors
-import h5py
 import snapshot
 from utils import mean_pos
 
 import time
+
 
 @nb.njit
 def find_first(value, vector):
@@ -20,6 +19,7 @@ def find_first(value, vector):
         if value == v:
             return i
     return -1
+
 
 @nb.njit
 def find_first_npositive(vector):
@@ -34,6 +34,7 @@ def find_first_npositive(vector):
 
 @nb.njit
 def calc_vr_phys(pos, vel, center, radius, a, H, h):
+    """Calculate physical radial velocities."""
     pos_centered = pos - center
     p_radii = np.sqrt(np.sum(pos_centered**2, axis=1))
     vel_center = mean_pos(vel[p_radii < radius])
@@ -63,6 +64,7 @@ if __name__ == "__main__":
         if rank == 0:
             print("Error: could not find data file")
         sys.exit(1)
+
     # read particle data on all processes
     pd = snapshot.ParticleData(snap_file)
     pos_tree = neighbors.BallTree(pd.pos)
@@ -102,37 +104,66 @@ if __name__ == "__main__":
     comm.Scatterv([all_centers, 3*count, 3*displ, MPI.DOUBLE], centers, root=0)
 
     radii_vr = np.zeros_like(radii)
+    n_parts = np.zeros_like(radii, dtype=int)
+    avg_vr = np.zeros_like(radii)
+    std_vr = np.zeros_like(radii)
 
     for i in range(len(radii)):
         time_start = time.perf_counter()
 
         center = centers[i]
         radius = radii[i]
+        # calculate physical vr for particles in/near shell
         r_cut = 2 * radius
-        mask = pos_tree.query_radius(center.reshape(1,-1), r_cut)[0]
-        p_radii_cut, vr_physical = calc_vr_phys(pd.pos[mask], pd.vel[mask], center, radius, pd.a, pd.Hubble, cosmo.h)
+        mask = pos_tree.query_radius(center.reshape(1, -1), r_cut)[0]
+        pos_cut = pd.pos[mask]
+        vel_cut = pd.vel[mask]
+        p_radii_cut, vr_physical = calc_vr_phys(pos_cut, vel_cut, center, radius, pd.a, pd.Hubble, cosmo.h)
 
         # find first radius after which vr_physical is no longer negative
         sorted_i = np.lexsort((vr_physical, p_radii_cut))
         index = find_first(0, np.cumprod(vr_physical[sorted_i][::-1] > 0))
         # average of last negative and next
-        radii_vr[i] = 0.5 * (p_radii_cut[sorted_i][::-1][index] + p_radii_cut[sorted_i][::-1][index-1])
+        radius_vr = 0.5 * (p_radii_cut[sorted_i][::-1][index] + p_radii_cut[sorted_i][::-1][index-1])
+
+        # number of particles inside radius_vr
+        n_vr = pos_tree.query_radius(center.reshape(1, -1), radius_vr, count_only=True)
+
+        # calculate vr quantities inside shell
+        mask_shell = p_radii_cut < radius
+        vr_phys_shell = vr_physical[mask_shell]
+
+        avg_vr[i] = np.mean(vr_phys_shell)
+        std_vr[i] = np.std(vr_phys_shell)
+        radii_vr[i] = radius_vr
+        n_parts[i] = n_vr
 
         time_end = time.perf_counter()
 
-        print(i, radii_vr[i], "  {:.4f} sec".format(time_end - time_start))
+        print((rank, i), radii_vr[i], "  {:.4f} sec".format(time_end - time_start))
 
     comm.Barrier()
     if rank == 0:
         print("Done")
         all_radii_vr = np.zeros_like(all_radii)
+        all_n_parts = np.zeros_like(all_radii, dtype=int)
+        all_avg_vr = np.zeros_like(all_radii)
+        all_std_vr = np.zeros_like(all_radii)
     else:
         all_radii_vr = None
+        all_n_parts = None
+        all_avg_vr = None
+        all_std_vr = None
 
     comm.Gatherv(radii_vr, [all_radii_vr, count, displ, MPI.DOUBLE], root=0)
+    comm.Gatherv(n_parts, [all_n_parts, count, displ, MPI.LONG], root=0)
+    comm.Gatherv(avg_vr, [all_avg_vr, count, displ, MPI.DOUBLE], root=0)
+    comm.Gatherv(std_vr, [all_std_vr, count, displ, MPI.DOUBLE], root=0)
 
     if rank == 0:
         print("Gathered")
+        data = {"radii_vr": all_radii_vr, "n_vr": all_n_parts,
+               "avg_vr": all_avg_vr, "std_vr": all_std_vr}
         with open(data_dir + "-analysis/vr_crit_radii", 'wb') as f:
-            pickle.dump(all_radii_vr, f)
+            pickle.dump(data, f)
 
