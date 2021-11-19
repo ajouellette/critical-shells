@@ -1,23 +1,16 @@
 import os
 import sys
-import pickle
 import numpy as np
 from mpi4py import MPI
 from astropy.cosmology import FlatLambdaCDM
 import astropy.units as u
 from sklearn import neighbors
 import h5py
+from snapshot import ParticleData
+from utils import sphere_volume
 
 import time
-import cProfile
-
-pr = cProfile.Profile()
 profile = False
-
-
-def sphere_volume(radius, a=1):
-    """Volume of a sphere with an optional scale factor."""
-    return 4/3 * np.pi * (a * radius)**3
 
 
 def get_density(pos_tree, center, radius, part_mass):
@@ -135,6 +128,8 @@ def print_dup_error(fof_i, sh_i, center, radius):
 
 if __name__ == "__main__":
     if profile:
+        import cProfile
+        pr = cProfile.Profile()
         pr.enable()
 
     comm = MPI.COMM_WORLD
@@ -142,6 +137,8 @@ if __name__ == "__main__":
     n_ranks = comm.Get_size()
 
     np.random.seed(10)
+
+    min_n_particles = 10
 
     if len(sys.argv) != 3:
         if rank == 0:
@@ -158,23 +155,19 @@ if __name__ == "__main__":
         sys.exit(1)
 
     time_start = time.perf_counter()
-    # load particle data
-    with h5py.File(snap_file) as f:
-        box_size = f["Header"].attrs["BoxSize"]
-        Om0 = f["Parameters"].attrs["Omega0"]
-        part_mass = f["Header"].attrs["MassTable"][1] * 1e10
-        pos = f["PartType1"]["Coordinates"][:]
-        pos_tree = neighbors.BallTree(pos)
+    # load particle data and construct tree of positions
+    pd = ParticleData(snap_file, load_vels=False)
+    pos_tree = neighbors.BallTree(pd.pos)
 
     comm.Barrier()
     time_end = time.perf_counter()
     if rank == 0:
-        print(f"Time to construct trees {(time_end - time_start)/60:.2f} minutes")
+        print(f"Time to load data and construct trees {(time_end - time_start)/60:.2f} minutes")
         print("Memory usage after tree construction:")
         os.system("free -h")
 
     # Use H0 = 100 to factor out h, calculate critical density
-    cosmo = FlatLambdaCDM(H0=100, Om0=Om0)
+    cosmo = FlatLambdaCDM(H0=100, Om0=pd.OmegaMatter)
     crit_dens_a100 = cosmo.critical_density(-0.99).to(u.Msun / u.Mpc**3).value
 
     # load FoF group data
@@ -192,8 +185,8 @@ if __name__ == "__main__":
     if rank == 0:
         # some debug info
         print(f"Critical density at a = 100: {crit_dens_a100:.3e}")
-        print(f"Particle mass: {part_mass:.3e}")
-        print(f"Processing {len(fof_pos_all)} on {n_ranks} MPI ranks" + \
+        print(f"Particle mass: {pd.part_mass:.3e}")
+        print(f"Processing {len(fof_pos_all)} FoF groups on {n_ranks} MPI ranks" + \
                 f", {len(fof_pos_all)//n_ranks} per rank")
 
         avg, res = divmod(len(fof_pos_all), n_ranks)
@@ -224,8 +217,8 @@ if __name__ == "__main__":
     radii = []
     centers = []
     n_parts = []
-    fof_origins = []
-    sh_origins = []
+    parents = []
+    part_ids = np.array([], dtype=int)
 
     time_start = time.perf_counter()
     for i in range(len(fof_pos)):
@@ -239,20 +232,21 @@ if __name__ == "__main__":
             center_i = fof_pos[i]
 
             # ignore centers too close to box boundary
-            if np.sum(center_i < 2) or np.sum(center_i > box_size - 2):
+            if np.sum(center_i < 2) or np.sum(center_i > pd.box_size - 2):
                 print("Skipping:", center_i, "too close to boundary")
                 continue
 
             center, radius, n, c_conv, d_conv = find_critical_shell(pos_tree, center_i,
-                    part_mass, crit_dens_a100)
+                    pd.part_mass, crit_dens_a100)
 
-            if c_conv and d_conv:
+            if c_conv and d_conv and n >= min_n_particles:
                 print("Found halo:", center, radius)
                 radii.append(radius)
                 centers.append(center)
                 n_parts.append(n)
-                fof_origins.append(fof_i)
-                sh_origins.append(0)
+                parents.append([fof_i, 0])
+                ind = pos_tree.query_radius(center.reshape(1, -1), radius)[0]
+                part_ids = np.hstack((part_ids, pd.ids[ind]))
             else:
                 print_conv_error(c_conv, d_conv, fof_i)
 
@@ -263,7 +257,7 @@ if __name__ == "__main__":
             center_i = sh_pos[sh_i]
 
             # ignore centers too close to box boundary
-            if np.sum(center_i < 2) or np.sum(center_i > box_size - 2):
+            if np.sum(center_i < 2) or np.sum(center_i > pd.box_size - 2):
                 print("Skipping:", center_i, "too close to boundary")
                 continue
 
@@ -274,7 +268,7 @@ if __name__ == "__main__":
                 continue
 
             center, radius, n, c_conv, d_conv = find_critical_shell(pos_tree, center_i,
-                    part_mass, crit_dens_a100, findCOM=False)
+                    pd.part_mass, crit_dens_a100, findCOM=False)
 
             # check if final center is within a sphere already found
             dup = check_duplicate(centers, radii, center, radius=radius, check_dup_len=j)
@@ -282,13 +276,14 @@ if __name__ == "__main__":
                 print_dup_error(fof_i, j, centers[dup], radii[dup])
                 continue
 
-            if c_conv and d_conv:
+            if c_conv and d_conv and n > min_n_particles:
                 print("Found halo:", center, radius)
                 radii.append(radius)
                 centers.append(center)
                 n_parts.append(n)
-                fof_origins.append(fof_i)
-                sh_origins.append(sh_i)
+                parents.append([fof_i, sh_i])
+                ind = pos_tree.query_radius(center.reshape(1, -1), radius)[0]
+                part_ids = np.hstack((part_ids, pd.ids[ind]))
             else:
                 print_conv_error(c_conv, d_conv, fof_i, sh_i)
 
@@ -296,31 +291,39 @@ if __name__ == "__main__":
     centers = np.array(centers, dtype=np.float64)
     radii = np.array(radii, dtype=np.float64)
     n_parts = np.array(n_parts)
-    fof_origins = np.array(fof_origins)
-    sh_origins = np.array(sh_origins)
-    length = np.array(len(centers))
+    parents = np.array(parents)
+    len_shells = np.array(len(centers))
+    len_particles = np.array(len(part_ids))
 
     total_length = np.array(0)
-    comm.Reduce(length, total_length, op=MPI.SUM, root=0)
+    total_particles = np.array(0)
+    comm.Reduce(len_shells, total_length, op=MPI.SUM, root=0)
+    comm.Reduce(len_particles, total_particles, op=MPI.SUM, root=0)
 
-    lengths_c = np.array(comm.gather(3 * length, root=0))
-    lengths_r = np.array(comm.gather(length, root=0))
+    lengths_c = np.array(comm.gather(3 * len_shells, root=0))
+    lengths_r = np.array(comm.gather(len_shells, root=0))
+    lengths_p = np.array(comm.gather(2 * len_shells, root=0))
+    lengths_part = np.array(comm.gather(len_particles, root=0))
 
     displ_c = None
     displ_r = None
+    displ_p = None
+    displ_part = None
     all_centers = None
     all_radii = None
     all_n_parts = None
-    all_fof_origins = None
-    all_sh_origins = None
+    all_parents = None
+    all_part_ids = None
     if rank == 0:
         displ_c = np.array([sum(lengths_c[:r]) for r in range(n_ranks)])
         displ_r = np.array([sum(lengths_r[:r]) for r in range(n_ranks)])
+        displ_p = np.array([sum(lengths_p[:r]) for r in range(n_ranks)])
+        displ_part = np.array([sum(lengths_part[:r]) for r in range(n_ranks)])
         all_centers = np.zeros((total_length, 3))
         all_radii = np.zeros(total_length)
         all_n_parts = np.zeros(total_length, dtype=int)
-        all_fof_origins = np.zeros(total_length, dtype=int)
-        all_sh_origins = np.zeros(total_length, dtype=int)
+        all_parents = np.zeros((total_length, 2), dtype=int)
+        all_part_ids = np.zeros(total_particles, dtype=int)
 
     comm.Barrier()
     time_end = time.perf_counter()
@@ -329,33 +332,32 @@ if __name__ == "__main__":
     comm.Gatherv(centers, [all_centers, lengths_c, displ_c, MPI.DOUBLE], root=0)
     comm.Gatherv(radii, [all_radii, lengths_r, displ_r, MPI.DOUBLE], root=0)
     comm.Gatherv(n_parts, [all_n_parts, lengths_r, displ_r, MPI.LONG], root=0)
-    comm.Gatherv(fof_origins, [all_fof_origins, lengths_r, displ_r, MPI.LONG], root=0)
-    comm.Gatherv(sh_origins, [all_sh_origins, lengths_r, displ_r, MPI.LONG], root=0)
+    comm.Gatherv(parents, [all_parents, lengths_p, displ_p, MPI.LONG], root=0)
+    comm.Gatherv(part_ids, [all_part_ids, lengths_part, displ_part, MPI.LONG], root=0)
 
     if rank == 0:
-        filter_n = True
-        print(f"Finished, {len(all_radii)} spherical halos found in {(time_end - time_start)/60:.2f} minutes")
-        min_n = 10
-        n_cut = all_n_parts >= 10
-        print(f"{np.sum(n_cut)} spherical halos found with more than {min_n} particles")
-        if filter_n:
-            print("Saving filtered catalog")
-            all_centers = all_centers[n_cut]
-            all_radii = all_radii[n_cut]
-            all_n_parts = all_n_parts[n_cut]
-            all_fof_origins = all_fof_origins[n_cut]
-            all_sh_origins = all_sh_origins[n_cut]
+        masses = pd.part_mass * all_n_parts
 
-        masses = part_mass * all_n_parts
-        # save data: shell centers, radii, number of particles inside shell,
-        #            total shell mass, parent fof group, parent subhalo
-        data = {"centers": all_centers, "radii": all_radii,
-                "n": all_n_parts, "masses": masses, "fof_i": all_fof_origins,
-                "sh_i": all_sh_origins}
+        print(f"Finished in {(time_end - time_start)/60:.2f} minutes")
+        print(f"{len(all_radii)} critical shells found with more than {min_n_particles} particles")
 
+        # save data as hdf5
         if not profile:
-            with open(data_dir + "-analysis/spherical_halos_mpi", "wb") as f:
-                pickle.dump(data, f)
+            catalog_file = data_dir + "-analysis/critical_shells.hdf5"
+            print("Saving filtered catalog to ", catalog_file)
+            with h5py.File(catalog_file, 'w') as f:
+                # attributes
+                f.attrs["Nshells"] = len(all_centers)
+                f.attrs["NparticlesTotal"] = 100 * len(all_centers)
+                # datasets
+                f.create_dataset("Centers", data=all_centers)
+                f.create_dataset("Radii", data=all_radii)
+                f.create_dataset("Nparticles", data=all_n_parts)
+                f.create_dataset("Masses", data=masses)
+                f.create_dataset("Parents", data=all_parents)
+                f.create_dataset("ParticleIDs", data=all_part_ids)
+
+        print("Done.")
 
     if profile:
         pr.disable()

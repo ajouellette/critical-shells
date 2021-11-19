@@ -15,6 +15,7 @@ import utils
 # For a 256**3 particle sim in single precision a ParticleData object will use ~0.44GB
 #  a 512**3 particle sim will use ~3.5GB
 
+
 class Snapshot:
 
     def __init__(self, fname):
@@ -44,17 +45,19 @@ class Snapshot:
         self.pos += self.box_size*(self.pos <= 0) - self.box_size*(self.pos > self.box_size)
         self._dx = np.zeros(3)
 
-        
+
 class ParticleData(Snapshot):
 
-    def __init__(self, fname):
+    def __init__(self, fname, load_vels=True, load_ids=True):
         super().__init__(fname)
         self.n_parts = self._hdf["Header"].attrs["NumPart_Total"][1]
         self.part_mass = self._hdf["Header"].attrs["MassTable"][1] * 1e10
 
         self.pos = self._hdf["PartType1"]["Coordinates"][:]
-        self.vel = self._hdf["PartType1"]["Velocities"][:]
-        self.ids = self._hdf["PartType1"]["ParticleIDs"][:]
+        if load_vels:
+            self.vel = self._hdf["PartType1"]["Velocities"][:]
+        if load_ids:
+            self.ids = self._hdf["PartType1"]["ParticleIDs"][:]
 
         self._hdf.close()
 

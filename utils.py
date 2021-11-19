@@ -24,17 +24,18 @@ def wrap_pbc(coords, box_size, in_place=False):
     return coords + dx
 
 
-def center_pbc(data, box_size, center_func="mean"):
+@nb.njit
+def mean_pos_pbc(pos, box_size):
     """Compute center of a cluster in a periodic box.
 
-    Periodic box is assumed to be [0, 2pi]
+    Periodic box is assumed to be [0, box_size]
     """
-    if center_func == "mean":
-        center_func = np.mean
-    elif center_func == "median":
-        center_func = np.median
-    else:
-        raise ValueError("unrecognized value for center_func")
-    theta = 2*np.pi * data / box_size
-    x, y = -func(np.cos(theta), axis=0), -func(np.sin(theta), axis=0)
+    theta = 2*np.pi * pos / box_size
+    x = -mean_pos(np.cos(theta))
+    y = -mean_pos(np.sin(theta))
     return box_size * (np.arctan2(y, x) + np.pi) / (2*np.pi)
+
+
+def sphere_volume(radius, a=1):
+    """Volume of a sphere with an optional scale factor."""
+    return 4/3 * np.pi * (a * radius)**3
