@@ -1,11 +1,11 @@
 import os
 import sys
-import pickle
+import h5py
 import numpy as np
 from mpi4py import MPI
-import h5py
 from sklearn import neighbors
 import pyfof
+from snapshot import ParticleData
 
 
 if __name__ == "__main__":
@@ -28,17 +28,14 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # read particle data on all processes
-    with h5py.File(snap_file) as f:  # a = 100
-        box_size = f["Header"].attrs["BoxSize"]
-        pos = f["PartType1"]["Coordinates"][:]
-        pos_tree = neighbors.BallTree(pos)
+    pd = ParticleData(snap_file, load_vels=False)
+    pos_tree = neighbors.BallTree(pd.pos)
 
     # read all halo data on rank 0 and divide up work
     if rank == 0:
-        with open(data_dir + "-analysis/spherical_halos_mpi", 'rb') as f:
-            data = pickle.load(f)
-        all_centers = data["centers"]
-        all_radii = data["radii"]
+        with h5py.File(data_dir + "-analysis/critical_shells.hdf5") as f:
+            all_centers = f["Centers"][:]
+            all_radii = f["Radii"][:]
         avg, res = divmod(len(all_radii), n_ranks)
         count = np.array([avg+1 if r < res else avg for r in range(n_ranks)])
         displ = np.array([sum(count[:r]) for r in range(n_ranks)])
@@ -60,15 +57,15 @@ if __name__ == "__main__":
     ids_fof = []
 
     # FoF linking length
-    link_len = 0.2 * box_size / len(pos)**(1/3)
+    link_len = 0.2 * pd.box_size / pd.n_parts**(1/3)
     if rank == 0:
         print(f"Using FoF linking length {link_len:.2f} Mpc")
 
     for i in range(len(radii)):
         center = centers[i]
         radius = radii[i]
-        mask = pos_tree.query_radius(center.reshape(1,-1), 2*radius)[0]
-        pos_cut = pos[mask]
+        mask = pos_tree.query_radius(center.reshape(1, -1), 2*radius)[0]
+        pos_cut = pd.pos[mask]
         # run FoF
         if len(pos_cut) < 2:
             print("Error not enough particles")
@@ -92,7 +89,7 @@ if __name__ == "__main__":
 
     comm.Barrier()
     if rank == 0:
-        print("Done")
+        print("Finished")
         all_n_fof = np.zeros_like(all_radii, dtype=int)
         all_ids_fof = np.zeros(total_length, dtype=int)
         displ_ids = np.array([sum(lengths[:r]) for r in range(n_ranks)])
@@ -104,8 +101,12 @@ if __name__ == "__main__":
     comm.Gatherv(ids_fof, [all_ids_fof, lengths, displ_ids, MPI.LONG], root=0)
 
     if rank == 0:
-        print("Gathered")
-        data = {"n":all_n_fof, "ids":all_ids_fof}
-        with open(data_dir+"-analysis/fof_halos_100", 'wb') as f:
-            pickle.dump(data, f)
+        save_file = data_dir + "-analysis/fof_halos_100.hdf5"
+        print("Writing data to ", save_file)
+        with h5py.File(save_file, 'w') as f:
+            f.attrs["Nshells"] = len(all_n_fof)
+            f.create_dataset("Nparticles", data=all_n_fof)
+            f.create_dataset("ParticleIDs", data=all_ids_fof)
+
+        print("Done.")
 

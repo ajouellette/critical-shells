@@ -1,6 +1,6 @@
 import os
 import sys
-import pickle
+import h5py
 import numpy as np
 import numba as nb
 from mpi4py import MPI
@@ -66,7 +66,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # read particle data on all processes
-    pd = snapshot.ParticleData(snap_file)
+    pd = snapshot.ParticleData(snap_file, load_ids=False)
     pos_tree = neighbors.BallTree(pd.pos)
 
     comm.Barrier()
@@ -82,10 +82,9 @@ if __name__ == "__main__":
 
     # read all halo data on rank 0 and divide up work
     if rank == 0:
-        with open(data_dir + "-analysis/spherical_halos_mpi", 'rb') as f:
-            data = pickle.load(f)
-        all_centers = data["centers"]
-        all_radii = data["radii"]
+        with h5py.File(data_dir + "-analysis/critical_shells.hdf5") as f:
+            all_centers = f["Centers"][:]
+            all_radii = f["Radii"][:]
         avg, res = divmod(len(all_radii), n_ranks)
         count = np.array([avg+1 if r < res else avg for r in range(n_ranks)])
         displ = np.array([sum(count[:r]) for r in range(n_ranks)])
@@ -144,7 +143,7 @@ if __name__ == "__main__":
 
     comm.Barrier()
     if rank == 0:
-        print("Done")
+        print("Finished calculations")
         all_radii_vr = np.zeros_like(all_radii)
         all_n_parts = np.zeros_like(all_radii, dtype=int)
         all_avg_vr = np.zeros_like(all_radii)
@@ -161,9 +160,14 @@ if __name__ == "__main__":
     comm.Gatherv(std_vr, [all_std_vr, count, displ, MPI.DOUBLE], root=0)
 
     if rank == 0:
-        print("Gathered")
-        data = {"radii_vr": all_radii_vr, "n_vr": all_n_parts,
-               "avg_vr": all_avg_vr, "std_vr": all_std_vr}
-        with open(data_dir + "-analysis/vr_crit_radii", 'wb') as f:
-            pickle.dump(data, f)
+        save_file = data_dir + "-analysis/vr_data.hdf5"
+        print("Writing data to ", save_file)
+        with h5py.File(save_file, 'w') as f:
+            f.attrs["Nshells"] = len(all_radii_vr)
+            f.create_dataset("Radii", data=all_radii_vr)
+            f.create_dataset("Nparticles", data=all_n_parts)
+            f.create_dataset("AvgVr", data=all_avg_vr)
+            f.create_dataset("StdVr", data=all_std_vr)
+
+        print("Done.")
 
