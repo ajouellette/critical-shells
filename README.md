@@ -1,3 +1,3 @@
-# gadget-snapshot
+# critical-shells 
 
-Code for analysis of GADGET cosmology sims
+Code for locating and analyzing critcal shells for dark matter halos in GADGET-4 simulations.
