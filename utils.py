@@ -29,6 +29,9 @@ def mean_pos_pbc(pos, box_size):
     """Compute center of a cluster in a periodic box.
 
     Periodic box is assumed to be [0, box_size]
+
+    Method from Bai and Breen 2008.
+    (https://en.wikipedia.org/wiki/Center_of_mass#Systems_with_periodic_boundary_conditions)
     """
     theta = 2*np.pi * pos / box_size
     x = -mean_pos(np.cos(theta))
@@ -39,3 +42,15 @@ def mean_pos_pbc(pos, box_size):
 def sphere_volume(radius, a=1):
     """Volume of a sphere with an optional scale factor."""
     return 4/3 * np.pi * (a * radius)**3
+
+
+@nb.njit
+def calc_hmf(bins, masses, box_size):
+    """Calculate the halo mass function given masses and bins."""
+    hmf = np.zeros_like(bins)
+    errors = np.zeros_like(bins)
+    for i, thresh in enumerate(bins):
+        count = np.sum(masses > thresh)
+        hmf[i] = count / box_size**3
+        errors[i] = np.sqrt(count) / box_size**3
+    return hmf, errors
