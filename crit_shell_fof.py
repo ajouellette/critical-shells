@@ -1,14 +1,20 @@
-import numpy as np
-from mpi4py import MPI
-import pickle
-import h5py
-import pyfof
-from scipy import stats
-from astropy.cosmology import FlatLambdaCDM
-from astropy import units as u
 import os
 import sys
-import snapshot
+import h5py
+import pickle
+import numpy as np
+import numba as nb
+from scipy import stats
+from mpi4py import MPI
+from astropy.cosmology import FlatLambdaCDM
+from astropy import units as u
+from sklearn import neighbors
+from scipy import spatial
+import pyfof
+from snapshot import ParticleData
+from utils import mean_pos, mean_pos_pbc
+
+import time
 
 
 if __name__ == "__main__":
@@ -17,109 +23,120 @@ if __name__ == "__main__":
     rank = comm.Get_rank()
     n_ranks = comm.Get_size()
 
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 3:
         if rank == 0:
-            print("Error: need data dir and snapshot numbers")
+            print("Error: need data dir and snapshot number")
         sys.exit(1)
 
     data_dir = sys.argv[1]
     snap_num1 = sys.argv[2]
-    snap_num100 = sys.argv[3]
     snap_file1 = data_dir + "/snapshot_" + snap_num1 + ".hdf5"
-    snap_file100 = data_dir + "/snapshot_" + snap_num100 + ".hdf5"
     if rank == 0:
-        print("Using data files {} and {}".format(snap_file1, snap_file100))
-    if not (os.path.exists(snap_file1) and os.path.exists(snap_file100)):
+        print("Using data files {}".format(snap_file1))
+    if not os.path.exists(snap_file1):
         if rank == 0:
             print("Error: could not find data files")
         sys.exit(1)
 
     # read particle data on all processes
-    with h5py.File(snap_file100) as f:  # a = 100
-        pos100 = f["PartType1"]["Coordinates"][:]
-        ids100 = f["PartType1"]["ParticleIDs"][:]
-        box_size = f["Header"].attrs["BoxSize"]
-        part_mass = f["Header"].attrs["MassTable"][1] * 1e10
-    with h5py.File(snap_file1) as f:  # a = 1
-        pos1 = f["PartType1"]["Coordinates"][:]
-        ids1 = f["PartType1"]["ParticleIDs"][:]
-        cosmo = FlatLambdaCDM(Om0=f["Parameters"].attrs["Omega0"], H0=100)
-        crit_density = cosmo.critical_density0.to(u.Msun / u.Mpc**3).value
+    pd = ParticleData(snap_file1, load_vels=False)
+    # hack to convert positions in range (0,L] from GADGET to range [0,L) for the KDTree
+    pos_tree = spatial.KDTree(np.float64(pd.pos) - np.min(pd.pos), boxsize=256.0, leafsize=30)
 
-    # read all halo data on rank 0 and divide up work
-    if rank == 0:
-        with open(data_dir + "-analysis/spherical_halos_mpi", 'rb') as f:
-            data = pickle.load(f)
-        all_centers = data["centers"]
-        all_radii = data["radii"]
-        avg, res = divmod(len(all_radii), n_ranks)
-        count = np.array([avg+1 if r < res else avg for r in range(n_ranks)])
-        displ = np.array([sum(count[:r]) for r in range(n_ranks)])
-    else:
-        all_centers = None
-        all_radii = None
-        count = np.zeros(n_ranks, dtype=int)
-        displ = 0
+    cosmo = FlatLambdaCDM(Om0=pd.OmegaMatter, H0=100)
+    crit_density = cosmo.critical_density0.to(u.Msun / u.Mpc**3).value
 
-    comm.Bcast(count, root=0)
+    # critical shell data
+    with h5py.File(data_dir + "-analysis/critical_shells.hdf5") as f:
+        all_centers = f["Centers"][:]
+        all_radii = f["Radii"][:]
+        all_n = f["Nparticles"][:]
+        all_ids = f["ParticleIDs"][:]
 
-    centers = np.zeros((count[rank], 3))
-    radii = np.zeros(count[rank])
+    avg, res = divmod(len(all_radii), n_ranks)
+    count = np.array([avg+1 if r < res else avg for r in range(n_ranks)])
+    displ = np.array([sum(count[:r]) for r in range(n_ranks)])
 
-    comm.Scatterv([all_radii, count, displ, MPI.DOUBLE], radii, root=0)
-    comm.Scatterv([all_centers, 3*count, 3*displ, MPI.DOUBLE], centers, root=0)
-
-    n_fof = np.zeros_like(radii, dtype=int)
-    frac_collapse = np.zeros_like(radii, dtype=float)
-    radii1 = np.zeros_like(radii)
-    densities = np.zeros_like(radii)
+    n_fof = np.zeros(count[rank], dtype=int)
+    frac_collapse = np.zeros(count[rank], dtype=float)
+    radii1 = np.zeros(count[rank])
+    densities = np.zeros(count[rank])
     ids_fof = []
 
-    for i in range(len(radii)):
-        center = centers[i]
-        radius = radii[i] 
-        # get ids within shell at a=100
-        p_radii = np.linalg.norm(pos100 - center, axis=1)
-        ids = ids100[p_radii < radius]
+    link_len = 0.2 * pd.box_size / pd.n_parts**(1/3)
+    if rank == 0:
+        print(f"Using linking length {link_len} Mpc")
+
+    for i in range(count[rank]):
+        time_start = time.perf_counter()
+        center = all_centers[displ[rank] + i]
+        radius = all_radii[displ[rank] + i]
+        offset = sum(all_n[:displ[rank] + i])
+        shell_ids = all_ids[offset:offset+all_n[displ[rank] + i]]
+
         # get particle positions at a=1
-        mask_ids = np.isin(ids1, ids)
-        pos_shell = pos1[mask_ids]
-        # calculate center taking into account periodic BC
-        theta = 2*np.pi * pos_shell / box_size
-        # use median to calculate CoM? - more robust against outliers which we remove later
-        # do we need to remove outliers?? - might shrink radius too much
-        #center1 = (np.arctan2(np.mean(-np.sin(theta), axis=0), -np.mean(np.cos(theta), axis=0)) + np.pi) * 256/(2*np.pi)
-        center1 = (np.arctan2(np.median(-np.sin(theta), axis=0), -np.median(np.cos(theta), axis=0)) + np.pi) * box_size/(2*np.pi)
+        rough_mask = pos_tree.query_ball_point(center, 25)
+        ind_ids = np.nonzero(np.isin(pd.ids[rough_mask], shell_ids))
+        pos_shell = pd.pos[rough_mask][ind_ids]
+
+        # double check that we actually got all particles
+        if len(pos_shell) != len(shell_ids):
+            print("missed some particles", len(pos_shell), len(shell_ids))
+
+        center1 = mean_pos_pbc(pos_shell, pd.box_size)
+
         # recenter box on CoM
-        dx = center1 + box_size*(center1 < -box_size/2) - box_size*(center1 >= box_size/2)
-        pos1_centered = pos1 - dx
-        pos1_centered = pos1_centered + box_size*(pos1_centered < -box_size/2) - box_size*(pos1_centered >= box_size/2)
-        p_radii = np.linalg.norm(pos1_centered, axis=1)
+        dx = center1 + pd.box_size*(center1 < -pd.box_size/2) - pd.box_size*(center1 >= pd.box_size/2)
+        pos_shell_centered = pos_shell - dx
+        pos_shell_centered = pos_shell_centered + pd.box_size*(pos_shell_centered < -pd.box_size/2) - pd.box_size*(pos_shell_centered >= pd.box_size/2)
+        p_radii = np.linalg.norm(pos_shell_centered, axis=1)
         # sigmaclip to remove outliers - some particles move way further than expected when traced back
         # tune value of high? (maybe need smaller value)
-        radius1 = np.max(stats.sigmaclip(p_radii[mask_ids], high=3.5)[0])
-        mask_r1 = p_radii < radius1
-        density = np.sum(mask_r1) * part_mass / (4/3 * np.pi * radius1**3)
-        print("a=100: {} {:.4f}   a=1: {} {:.4f}".format(center, radius, center1, radius1))
+        # probably don't actually need to sigmaclip when using IDs to match clusters
+        radius1_clip = np.max(stats.sigmaclip(p_radii, high=3.5)[0])
+        radius1 = np.max(p_radii)
+        print(radius, radius1, radius1_clip, "clip" if radius1_clip < radius1/1.5 else "")
+        #density = np.sum(mask_r1) * part_mass / (4/3 * np.pi * radius1**3)
+        #print("a=100: {} {:.4f}   a=1: {} {:.4f}".format(center, radius, center1, radius1))
+
         # run FoF
-        link_len = 0.2
-        if np.sum(mask_r1) < 2:
+        ind = pos_tree.query_ball_point(center1, radius1)
+        if len(ind) < 2:
             print("Error not enough particles")
             n_fof[i] = 0
             continue
-        groups = pyfof.friends_of_friends(np.double(pos1_centered[mask_r1]), link_len)
-        group_lens = [len(groups[i]) for i in range(len(groups))]
-        main_group = np.argmax(group_lens)
-        print("number of groups {} size of main group {} size at a=100 {}".format(len(groups), len(groups[main_group]), len(ids)))
+        # center positions before running FoF
+        dx = center1 + pd.box_size*(center1 < -pd.box_size/2) - pd.box_size*(center1 >= pd.box_size/2)
+        pos_centered = pd.pos[ind] - dx
+        pos_centered = pos_centered + pd.box_size*(pos_centered < -pd.box_size/2) - pd.box_size*(pos_centered >= pd.box_size/2)
 
-        # want percentage of particles within radius at a=1 that will collapse to halo at a=100
-        frac_collapse[i] = np.sum(mask_ids) / np.sum(mask_r1)
+        groups = pyfof.friends_of_friends(np.double(pos_centered), link_len)
+        group_lens = [len(group) for group in groups]
+        main_group = np.argmax(group_lens)
+        print("number of groups {} size of main group {} size at a=100 {}".format(len(groups), len(groups[main_group]), len(shell_ids)), time.perf_counter() - time_start)
+
+        # Find FoF group with the highest number of matching particles
+        best_count = 0
+        best_i = np.argmax(group_lens)
+        for j in np.argsort(group_lens)[::-1][:10]:
+            ind_fof = groups[j]
+            fof_ids = pd.ids[ind][ind_fof]
+            match_count = np.sum(np.isin(shell_ids, fof_ids))
+            if match_count > best_count:
+                best_count = match_count
+                best_i = j
+
+        print(main_group, best_i, group_lens[best_i])
+        main_group = best_i
+
+        ## want percentage of particles within radius at a=1 that will collapse to halo at a=100
+        frac_collapse[i] = len(shell_ids) / len(ind)
 
         n_fof[i] = len(groups[main_group])
         ids_fof = ids_fof + groups[main_group]
 
         radii1[i] = radius1
-        densities[i] = density / crit_density
+        #densities[i] = density / crit_density
         #print(density/crit_density, "clipped" if radius1 < np.max(p_radii[mask_ids]) else "")
 
     comm.Barrier()
@@ -146,13 +163,13 @@ if __name__ == "__main__":
         all_frac_collapse = None
         all_radii1 = None
         all_densities = None
-        
+
     comm.Gatherv(n_fof, [all_n_fof, count, displ, MPI.LONG], root=0)
     comm.Gatherv(ids_fof, [all_ids_fof, lengths, displ_ids, MPI.LONG], root=0)
     comm.Gatherv(frac_collapse, [all_frac_collapse, count, displ, MPI.DOUBLE], root=0)
     comm.Gatherv(radii1, [all_radii1, count, displ, MPI.DOUBLE], root=0)
     comm.Gatherv(densities, [all_densities, count, displ, MPI.DOUBLE], root=0)
-        
+
     if rank == 0:
         print("Gathered")
         data = {"n":all_n_fof, "ids":all_ids_fof, "frac":all_frac_collapse, "radii1":all_radii1, "densities":all_densities}
