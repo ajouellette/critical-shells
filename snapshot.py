@@ -6,7 +6,7 @@ import utils
 #   single snapshot file contains all output data for given step
 #   file name is of the format {}_number.hdf5
 #   cosmological simulation (in comoving coordinates)
-#   default code units: Mpc, km/s, 1e10 Msun
+#   default code units: h^-1 Mpc, km/s, 1e10 h^-1 Msun
 #   only dark matter particles - PartType1
 #   all particles have the same mass
 
@@ -52,6 +52,9 @@ class ParticleData(Snapshot):
         super().__init__(fname)
         self.n_parts = self._hdf["Header"].attrs["NumPart_Total"][1]
         self.part_mass = self._hdf["Header"].attrs["MassTable"][1] * 1e10
+        self.mean_particle_sep = self.box_size / self.n_parts**(1/3)
+        self.mean_matter_density = self.n_parts * self.part_mass / self.box_size**3
+        self.flat_crit_density = self.mean_matter_density / self.OmegaMatter
 
         self.pos = self._hdf["PartType1"]["Coordinates"][:]
         if load_vels:
@@ -65,6 +68,8 @@ class ParticleData(Snapshot):
 
     def select_ids(self, ids):
         """Return indicies of particles given list of ids."""
+        if not self.load_ids:
+            raise RuntimeError("Cannot select particles, snapshot loaded with load_ids=False.")
         return np.where(np.in1d(self.ids, ids))
 
 
@@ -90,11 +95,5 @@ class HaloCatalog(Snapshot):
         return particle_data.ids[offset:offset+length]
 
     def calc_hmf(self, bins):
-        hmf = np.zeros_like(bins)
-        errors = np.zeros_like(bins)
-        for i in range(len(bins)):
-            counts = np.sum(self.masses > bins[i])
-            hmf[i] = counts / self.box_size**3
-            errors[i] = np.sqrt(counts) / self.box_size**3
-        return hmf, errors
+        return utils.calc_hmf(bins, self.masses, self.box_size)
 
