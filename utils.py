@@ -1,18 +1,25 @@
 import numpy as np
 import numba as nb
 
-nb_parallel = True
+nb_parallel = True  # not sure if this makes any difference on the cluster
 
 
 @nb.njit(parallel=nb_parallel)
 def get_sphere_mask(pos, center, radius):
-    """Calculate a spherical mask with given center and radius."""
+    """Calculate a spherical mask with given center and radius.
+
+    Returns a boolean mask that filters out the particles given by pos
+    that are within the given radius from center.
+    """
     return np.sum((pos - center)**2, axis=1) < radius**2
 
 
 @nb.njit(parallel=nb_parallel)
 def mean_pos(pos):
-    """Calculate mean position (mean over axis 0)."""
+    """Calculate mean position (mean over axis 0).
+
+    Needed since numba does not support np.mean with axis argument.
+    """
     return np.sum(pos, axis=0) / len(pos)
 
 
@@ -45,8 +52,35 @@ def sphere_volume(radius, a=1):
 
 
 @nb.njit
+def calc_vr_phys(pos, vel, center, radius, a, H, h):
+    """Calculate physical radial velocities.
+
+    Calculates physical radial velocities (km/s) wrt to given center for all
+    particles given by (pos, vel).
+    (center, radius) determines the boundary of the halo which is used to calculate
+    the velocity of the center of mass.
+    H is the Hubble parameter at the given scale factor a,
+    while h = H0/100.
+    Returns distances of particles from center as well as radial velocities.
+    """
+    pos_centered = pos - center
+    p_radii = np.sqrt(np.sum(pos_centered**2, axis=1))
+    vel_center = mean_pos(vel[p_radii < radius])
+    vel_peculiar = np.sqrt(a) * (vel - vel_center)
+    unit_vectors = pos_centered / np.expand_dims(p_radii, 1)
+    vr_peculiar = np.multiply(vel_peculiar, unit_vectors).sum(1)
+    hubble_flow = H * a * p_radii / h
+    vr_physical = vr_peculiar + hubble_flow
+    return p_radii, vr_physical
+
+
+@nb.njit
 def calc_hmf(bins, masses, box_size):
-    """Calculate the halo mass function given masses and bins."""
+    """Calculate the halo mass function given masses and bins.
+
+    Returns number densitesy of halos more massive than given bin values and
+    errors assuming a Poisson counting process.
+    """
     hmf = np.zeros_like(bins)
     errors = np.zeros_like(bins)
     for i, thresh in enumerate(bins):

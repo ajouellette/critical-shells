@@ -7,7 +7,7 @@ from mpi4py import MPI
 from astropy.cosmology import FlatLambdaCDM
 from sklearn import neighbors
 import snapshot
-from utils import mean_pos
+from utils import mean_pos, calc_vr_phys
 
 import time
 
@@ -30,20 +30,6 @@ def find_first_npositive(vector):
         if prod <= 0:
             break
     return i
-
-
-@nb.njit
-def calc_vr_phys(pos, vel, center, radius, a, H, h):
-    """Calculate physical radial velocities."""
-    pos_centered = pos - center
-    p_radii = np.sqrt(np.sum(pos_centered**2, axis=1))
-    vel_center = mean_pos(vel[p_radii < radius])
-    vel_peculiar = np.sqrt(a) * (vel - vel_center)
-    unit_vectors = pos_centered / np.expand_dims(p_radii, 1)
-    vr_peculiar = np.multiply(vel_peculiar, unit_vectors).sum(1)
-    hubble_flow = H * a * p_radii / h
-    vr_physical = vr_peculiar + hubble_flow
-    return p_radii, vr_physical
 
 
 if __name__ == "__main__":
