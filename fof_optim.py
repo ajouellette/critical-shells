@@ -11,9 +11,11 @@ from astropy import units as u
 from scipy import spatial
 import pyfof
 from snapshot import ParticleData
-from utils import mean_pos, mean_pos_pbc
+from utils import mean_pos, mean_pos_pbc, center_box_pbc
 
 import time
+
+link_params = np.linspace(0.05, 0.6, 25)
 
 
 if __name__ == "__main__":
@@ -28,19 +30,19 @@ if __name__ == "__main__":
         sys.exit(1)
 
     data_dir = sys.argv[1]
-    snap_num1 = sys.argv[2]
-    snap_file1 = data_dir + "/snapshot_" + snap_num1 + ".hdf5"
+    snap_num = sys.argv[2]
+    snap_file = data_dir + "/snapshot_" + snap_num + ".hdf5"
     if rank == 0:
-        print("Using data files {}".format(snap_file1))
-    if not os.path.exists(snap_file1):
+        print("Using data files {}".format(snap_file))
+    if not os.path.exists(snap_file):
         if rank == 0:
             print("Error: could not find data files")
         sys.exit(1)
 
     # read particle data on all processes
-    pd = ParticleData(snap_file1, load_vels=False)
+    pd = ParticleData(snap_file, load_vels=False)
     # hack to convert positions in range (0,L] from GADGET to range [0,L) for the KDTree
-    pos_tree = spatial.KDTree(np.float64(pd.pos) - np.min(pd.pos), boxsize=256.0, leafsize=30)
+    pos_tree = spatial.KDTree(np.float64(pd.pos) - np.min(pd.pos), boxsize=pd.box_size, leafsize=30)
 
     cosmo = FlatLambdaCDM(Om0=pd.OmegaMatter, H0=100)
     crit_density = cosmo.critical_density0.to(u.Msun / u.Mpc**3).value
@@ -56,8 +58,9 @@ if __name__ == "__main__":
     count = np.array([avg+1 if r < res else avg for r in range(n_ranks)])
     displ = np.array([sum(count[:r]) for r in range(n_ranks)])
 
-    link_lens = np.linspace(0.05, 0.6, 25) * pd.box_size / pd.n_parts**(1/3)
+    link_lens = link_params * pd.mean_particle_sep
     if rank == 0:
+        print(f"Mean particle separation {pd.mean_particle_sep:.2f} Mpc")
         print(f"Using linking lengths {link_lens} Mpc")
 
     n_fof = np.zeros((count[rank], len(link_lens)), dtype=int)
@@ -81,16 +84,10 @@ if __name__ == "__main__":
         center1 = mean_pos_pbc(pos_shell, pd.box_size)
 
         # recenter box on CoM
-        dx = center1 + pd.box_size*(center1 < -pd.box_size/2) - pd.box_size*(center1 >= pd.box_size/2)
-        pos_shell_centered = pos_shell - dx
-        pos_shell_centered = pos_shell_centered + pd.box_size*(pos_shell_centered < -pd.box_size/2) - pd.box_size*(pos_shell_centered >= pd.box_size/2)
+        pos_shell_centered = center_box_pbc(pos_shell, center1, pd.box_size)
+
         p_radii = np.linalg.norm(pos_shell_centered, axis=1)
-        # sigmaclip to remove outliers - some particles move way further than expected when traced back
-        # tune value of high? (maybe need smaller value)
-        # probably don't actually need to sigmaclip when using IDs to match clusters
-        radius1_clip = np.max(stats.sigmaclip(p_radii, high=3.5)[0])
         radius1 = np.max(p_radii)
-        print(radius, radius1, radius1_clip, "clip" if radius1_clip < radius1/1.5 else "")
 
         # run FoF
         ind = pos_tree.query_ball_point(center1, radius1)
@@ -99,9 +96,7 @@ if __name__ == "__main__":
             n_fof[i] = 0
             continue
         # center positions before running FoF
-        dx = center1 + pd.box_size*(center1 < -pd.box_size/2) - pd.box_size*(center1 >= pd.box_size/2)
-        pos_centered = pd.pos[ind] - dx
-        pos_centered = pos_centered + pd.box_size*(pos_centered < -pd.box_size/2) - pd.box_size*(pos_centered >= pd.box_size/2)
+        pos_centered = center_box_pbc(pd.pos[ind], center1, pd.box_size)
 
         for link_i, link_len in enumerate(link_lens):
             groups = pyfof.friends_of_friends(np.double(pos_centered), link_len)
@@ -140,4 +135,3 @@ if __name__ == "__main__":
         data = {"n": all_n_fof, "link_lens": link_lens}
         with open(data_dir+"-analysis/fof_optim", 'wb') as f:
             pickle.dump(data, f)
-

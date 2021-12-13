@@ -19,16 +19,10 @@ def mean_pos(pos):
     """Calculate mean position (mean over axis 0).
 
     Needed since numba does not support np.mean with axis argument.
+    Warning: numba does not support the dtype argument, so numeric errors
+    may occur if data is single precision.
     """
     return np.sum(pos, axis=0) / len(pos)
-
-
-def wrap_pbc(coords, box_size, in_place=False):
-    dx = box_size*(coords < -box_size/2) - box_size*(coords >= box_size/2)
-    if in_place:
-        coords += dx
-        return
-    return coords + dx
 
 
 @nb.njit
@@ -44,6 +38,26 @@ def mean_pos_pbc(pos, box_size):
     x = -mean_pos(np.cos(theta))
     y = -mean_pos(np.sin(theta))
     return box_size * (np.arctan2(y, x) + np.pi) / (2*np.pi)
+
+
+def wrap_pbc(coords, box_size, in_place=False):
+    dx = box_size*(coords < -box_size/2) - box_size*(coords >= box_size/2)
+    if in_place:
+        coords += dx
+        return
+    return coords + dx
+
+
+@nb.njit
+def center_box_pbc(coords, center, box_size):
+    """Recenter positions in a periodic box on a given center.
+
+    Returns coordinates in range [-L/2, L/2) centered on given center.
+    """
+    dx = center + box_size*(center < -box_size/2) - box_size*(center >= box_size/2)
+    coords_centered = coords - dx
+    coords_centered += box_size*(coords_centered < -box_size/2) - box_size*(coords_centered >= box_size/2)
+    return coords_centered
 
 
 def sphere_volume(radius, a=1):
