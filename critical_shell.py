@@ -19,8 +19,8 @@ def get_density(pos_tree, center, radius, part_mass):
     return n * part_mass / sphere_volume(radius, a=100)
 
 
-def find_critical_shell(pos_tree, center, part_mass, crit_dens, crit_ratio=2,
-        center_tol=1e-3, rcrit_tol=1e-5, maxiters=100, findCOM=True):
+def find_critical_shell(pos_tree, center, part_mass, box_size, crit_dens,
+        crit_ratio=2, center_tol=1e-3, rcrit_tol=1e-5, maxiters=100, findCOM=True):
     """Find a critical shell starting from given center.
 
     Parameters:
@@ -50,7 +50,7 @@ def find_critical_shell(pos_tree, center, part_mass, crit_dens, crit_ratio=2,
             if len(ind) == 0:
                 radius += 5e-3
                 continue
-            new_center = np.mean(pos_tree.data[ind], axis=0, dtype=float)
+            new_center = mean_pos_pbc(pos_tree.data[ind], box_size)
             if np.linalg.norm(center - new_center) < center_tol:
                 center_converged = True
                 break
@@ -82,7 +82,7 @@ def find_critical_shell(pos_tree, center, part_mass, crit_dens, crit_ratio=2,
         ind = pos_tree.query_ball_point(center, r_mid)
         if len(ind) == 0:
             break # ideally shouldn't happen, some problem with convergence
-        center = np.mean(pos_tree.data[ind], axis=0, dtype=float)
+        center = mean_pos_pbc(pos_tree.data[ind], box_size)
         density_mid = get_density(pos_tree, center, r_mid, part_mass)
 
         if density_mid / crit_dens == crit_ratio:
@@ -158,8 +158,9 @@ if __name__ == "__main__":
     # load particle data and construct tree of positions
     pd = ParticleData(snap_file, load_vels=False)
     # hack to convert positions in range (0,L] from GADGET to range [0,L) for the KDTree
-    pos_tree = spatial.KDTree(np.float64(pd.pos) - np.min(pd.pos),
-            boxsize=pd.box_size, leafsize=30)
+    pd.pos[pd.pos == 0] = 256.0
+    pos_tree = spatial.KDTree(pd.pos.astype(float) - np.min(pd.pos), boxsize=pd.box_size,
+            leafsize=30)
 
     comm.Barrier()
     time_end = time.perf_counter()
@@ -233,13 +234,8 @@ if __name__ == "__main__":
             print("No subgroups, using fof position", fof_i)
             center_i = fof_pos[i]
 
-            # ignore centers too close to box boundary
-            if np.sum(center_i < 2) or np.sum(center_i > pd.box_size - 2):
-                print("Skipping:", center_i, "too close to boundary")
-                continue
-
             center, radius, n, c_conv, d_conv = find_critical_shell(pos_tree, center_i,
-                    pd.part_mass, crit_dens_a100)
+                    pd.part_mass, pd.box_size, crit_dens_a100)
 
             if c_conv and d_conv and n >= min_n_particles:
                 print("Found halo:", center, radius)
@@ -258,11 +254,6 @@ if __name__ == "__main__":
             sh_i = sh_offsets[fof_i] + j
             center_i = sh_pos[sh_i]
 
-            # ignore centers too close to box boundary
-            if np.sum(center_i < 2) or np.sum(center_i > pd.box_size - 2):
-                print("Skipping:", center_i, "too close to boundary")
-                continue
-
             # check if initial center is within a sphere already found
             dup = check_duplicate(centers, radii, center_i, check_dup_len=j)
             if dup != -1:
@@ -270,7 +261,7 @@ if __name__ == "__main__":
                 continue
 
             center, radius, n, c_conv, d_conv = find_critical_shell(pos_tree, center_i,
-                    pd.part_mass, crit_dens_a100, findCOM=False)
+                    pd.part_mass, pd.box_size, crit_dens_a100, findCOM=False)
 
             # check if final center is within a sphere already found
             dup = check_duplicate(centers, radii, center, radius=radius, check_dup_len=j)
@@ -345,7 +336,7 @@ if __name__ == "__main__":
 
         # save data as hdf5
         if not profile:
-            catalog_file = data_dir + "-analysis/critical_shells.hdf5"
+            catalog_file = data_dir + "-analysis/critical_shells_scipy.hdf5"
             print("Saving filtered catalog to ", catalog_file)
             with h5py.File(catalog_file, 'w') as f:
                 # attributes
