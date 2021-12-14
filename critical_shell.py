@@ -4,10 +4,10 @@ import numpy as np
 from mpi4py import MPI
 from astropy.cosmology import FlatLambdaCDM
 import astropy.units as u
-from sklearn import neighbors
+from scipy import spatial
 import h5py
 from snapshot import ParticleData
-from utils import sphere_volume
+from utils import sphere_volume, mean_pos_pbc
 
 import time
 profile = False
@@ -15,7 +15,7 @@ profile = False
 
 def get_density(pos_tree, center, radius, part_mass):
     """Get density of a sphere from a tree of particle positions."""
-    n = pos_tree.query_radius(center.reshape(1, -1), radius, count_only=True)[0]
+    n = pos_tree.query_ball_point(center, radius, return_length=True)
     return n * part_mass / sphere_volume(radius, a=100)
 
 
@@ -24,8 +24,7 @@ def find_critical_shell(pos_tree, center, part_mass, crit_dens, crit_ratio=2,
     """Find a critical shell starting from given center.
 
     Parameters:
-    pos_tree: sklearn tree (either KDTree or BallTree) constructed from
-              particle postitions
+    pos_tree: scipy KDTree constructed from particle postitions
     center: ndarray (1,3) - Initial guess for center of shell
     part_mass: float - Particle mass
     crit_dens: float - Critical density of universe
@@ -47,11 +46,11 @@ def find_critical_shell(pos_tree, center, part_mass, crit_dens, crit_ratio=2,
         center_converged = False
         # find center of largest substructure
         for iters in range(1, 20):
-            ind = pos_tree.query_radius(center.reshape(1, -1), radius)[0]
+            ind = pos_tree.query_ball_point(center, radius)
             if len(ind) == 0:
                 radius += 5e-3
                 continue
-            new_center = np.mean(pos_tree.data.base[ind], axis=0, dtype=float)
+            new_center = np.mean(pos_tree.data[ind], axis=0, dtype=float)
             if np.linalg.norm(center - new_center) < center_tol:
                 center_converged = True
                 break
@@ -80,10 +79,10 @@ def find_critical_shell(pos_tree, center, part_mass, crit_dens, crit_ratio=2,
     density_converged = False
     for i in range(iters+1, maxiters):
         r_mid = (r_low + r_high) / 2
-        ind = pos_tree.query_radius(center.reshape(1, -1), r_mid)[0]
+        ind = pos_tree.query_ball_point(center, r_mid)
         if len(ind) == 0:
             break # ideally shouldn't happen, some problem with convergence
-        center = np.mean(pos_tree.data.base[ind], axis=0, dtype=float)
+        center = np.mean(pos_tree.data[ind], axis=0, dtype=float)
         density_mid = get_density(pos_tree, center, r_mid, part_mass)
 
         if density_mid / crit_dens == crit_ratio:
@@ -105,7 +104,7 @@ def find_critical_shell(pos_tree, center, part_mass, crit_dens, crit_ratio=2,
             break
 
     # number of particles
-    n_parts = pos_tree.query_radius(center.reshape(1, -1), r_mid, count_only=True)[0]
+    n_parts = pos_tree.query_ball_point(center, r_mid, return_length=True)
 
     return center, r_mid, n_parts, center_converged, density_converged
 
@@ -158,7 +157,9 @@ if __name__ == "__main__":
     time_start = time.perf_counter()
     # load particle data and construct tree of positions
     pd = ParticleData(snap_file, load_vels=False)
-    pos_tree = neighbors.BallTree(pd.pos)
+    # hack to convert positions in range (0,L] from GADGET to range [0,L) for the KDTree
+    pos_tree = spatial.KDTree(np.float64(pd.pos) - np.min(pd.pos),
+            boxsize=pd.box_size, leafsize=30)
 
     comm.Barrier()
     time_end = time.perf_counter()
@@ -246,7 +247,7 @@ if __name__ == "__main__":
                 centers.append(center)
                 n_parts.append(n)
                 parents.append([fof_i, 0])
-                ind = pos_tree.query_radius(center.reshape(1, -1), radius)[0]
+                ind = pos_tree.query_ball_point(center, radius)
                 part_ids = np.hstack((part_ids, pd.ids[ind]))
             else:
                 print_conv_error(c_conv, d_conv, fof_i)
@@ -283,7 +284,7 @@ if __name__ == "__main__":
                 centers.append(center)
                 n_parts.append(n)
                 parents.append([fof_i, sh_i])
-                ind = pos_tree.query_radius(center.reshape(1, -1), radius)[0]
+                ind = pos_tree.query_ball_point(center, radius)
                 part_ids = np.hstack((part_ids, pd.ids[ind]))
             else:
                 print_conv_error(c_conv, d_conv, fof_i, sh_i)
