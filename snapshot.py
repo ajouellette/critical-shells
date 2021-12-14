@@ -32,19 +32,6 @@ class Snapshot:
         self.Hubble0 = self._hdf["Parameters"].attrs["Hubble"] * self._hdf["Parameters"].attrs["HubbleParam"]
         self.Hubble = self.Hubble0 * np.sqrt(self.OmegaMatter * self.a**-3 + (1-self.OmegaMatter-self.OmegaLambda) * self.a**-2 + self.OmegaLambda)
 
-    def recenter(self, center):
-        # keep track of total movement to be able to move back to original center
-        self._dx += center
-        dx = utils.wrap_pbc(center, self.box_size)
-        self.pos -= dx
-        utils.wrap_pbc(self.pos, self.box_size, in_place=True)
-
-    def recenter_original(self):
-        utils.wrap_pbc(self._dx, self.box_size, in_place=True)
-        self.pos += self._dx
-        self.pos += self.box_size*(self.pos <= 0) - self.box_size*(self.pos > self.box_size)
-        self._dx = np.zeros(3)
-
 
 class ParticleData(Snapshot):
 
@@ -96,4 +83,3 @@ class HaloCatalog(Snapshot):
 
     def calc_hmf(self, bins):
         return utils.calc_hmf(bins, self.masses, self.box_size)
-
