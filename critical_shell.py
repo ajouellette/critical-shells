@@ -71,7 +71,8 @@ def find_critical_shell(pos_tree, center, part_mass, crit_dens, crit_ratio=2,
     density_high = get_density(pos_tree, center, r_high, part_mass)
 
     # check that guess actually brackets root
-    if not (density_low / crit_dens > crit_ratio and density_high / crit_dens < crit_ratio):
+    if not (density_low / crit_dens > crit_ratio and
+            density_high / crit_dens < crit_ratio):
         print("error initial guesses not good enough",
                 (r_low, density_low / crit_dens), (r_high, density_high / crit_dens))
         return center, 0, 0, center_converged, False
@@ -348,7 +349,7 @@ if __name__ == "__main__":
             with h5py.File(catalog_file, 'w') as f:
                 # attributes
                 f.attrs["Nshells"] = len(all_centers)
-                f.attrs["NparticlesTotal"] = 100 * len(all_centers)
+                f.attrs["NparticlesTotal"] = len(all_part_ids)
                 # datasets
                 f.create_dataset("Centers", data=all_centers)
                 f.create_dataset("Radii", data=all_radii)
@@ -365,4 +366,3 @@ if __name__ == "__main__":
         with open('cpu_%d.txt' % rank, 'w') as output_file:
             sys.stdout = output_file
             pr.print_stats(sort='time')
-
