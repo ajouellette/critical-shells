@@ -3,19 +3,15 @@ import sys
 import h5py
 import pickle
 import numpy as np
-import numba as nb
-from scipy import stats
 from mpi4py import MPI
-from astropy.cosmology import FlatLambdaCDM
-from astropy import units as u
 from scipy import spatial
 import pyfof
 from snapshot import ParticleData
-from utils import mean_pos, mean_pos_pbc, center_box_pbc
+from utils import mean_pos_pbc, center_box_pbc
 
 import time
 
-link_params = np.linspace(0.05, 0.6, 25)
+link_params = np.linspace(0.05, 0.6, 31)
 
 
 if __name__ == "__main__":
@@ -42,10 +38,8 @@ if __name__ == "__main__":
     # read particle data on all processes
     pd = ParticleData(snap_file, load_vels=False)
     # hack to convert positions in range (0,L] from GADGET to range [0,L) for the KDTree
-    pos_tree = spatial.KDTree(np.float64(pd.pos) - np.min(pd.pos), boxsize=pd.box_size, leafsize=30)
-
-    cosmo = FlatLambdaCDM(Om0=pd.OmegaMatter, H0=100)
-    crit_density = cosmo.critical_density0.to(u.Msun / u.Mpc**3).value
+    pos_tree = spatial.KDTree(np.float64(pd.pos) - np.min(pd.pos),
+            boxsize=pd.box_size, leafsize=30)
 
     # critical shell data
     with h5py.File(data_dir + "-analysis/critical_shells.hdf5") as f:
@@ -102,7 +96,8 @@ if __name__ == "__main__":
             groups = pyfof.friends_of_friends(np.double(pos_centered), link_len)
             group_lens = [len(group) for group in groups]
             main_group = np.argmax(group_lens)
-            print("number of groups {} size of main group {} size at a=100 {}".format(len(groups), len(groups[main_group]), len(shell_ids)), time.perf_counter() - time_start)
+            print("number of groups {} size of main group {} size at a=100 {}".format(len(groups),
+                len(groups[main_group]), len(shell_ids)), time.perf_counter() - time_start)
 
             # Find FoF group with the highest number of matching particles
             best_count = 0
@@ -132,6 +127,6 @@ if __name__ == "__main__":
 
     if rank == 0:
         print("Gathered")
-        data = {"n": all_n_fof, "link_lens": link_lens}
+        data = {"n": all_n_fof, "link_params": link_params}
         with open(data_dir+"-analysis/fof_optim", 'wb') as f:
             pickle.dump(data, f)
