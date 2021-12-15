@@ -4,7 +4,6 @@ import h5py
 import numpy as np
 import numba as nb
 from mpi4py import MPI
-from astropy.cosmology import FlatLambdaCDM
 from sklearn import neighbors
 import snapshot
 from utils import mean_pos, calc_vr_phys
@@ -60,11 +59,8 @@ if __name__ == "__main__":
         print("Memory usage after loading particle data and constructing trees")
         os.system("free -h")
 
-    cosmo = FlatLambdaCDM(H0=pd.Hubble0, Om0=pd.OmegaMatter)
-
     if rank == 0:
-        print("h = {:.3f}, a = {:.1f}".format(cosmo.h, pd.a))
-        print("H = {:.2f}  {:.2f}".format(pd.Hubble, cosmo.H(-0.99)))
+        print(f"h = {pd.h:.3f}, a = {pd.a:.1f}, H = {pd.Hubble:.2f} km/s / Mpc")
 
     # read all halo data on rank 0 and divide up work
     if rank == 0:
@@ -103,7 +99,7 @@ if __name__ == "__main__":
         mask = pos_tree.query_radius(center.reshape(1, -1), r_cut)[0]
         pos_cut = pd.pos[mask]
         vel_cut = pd.vel[mask]
-        p_radii_cut, vr_physical = calc_vr_phys(pos_cut, vel_cut, center, radius, pd.a, pd.Hubble, cosmo.h)
+        p_radii_cut, vr_physical = calc_vr_phys(pos_cut, vel_cut, center, radius, pd.a, pd.Hubble, pd.h)
 
         # find first radius after which vr_physical is no longer negative
         sorted_i = np.lexsort((vr_physical, p_radii_cut))
@@ -156,4 +152,3 @@ if __name__ == "__main__":
             f.create_dataset("StdVr", data=all_std_vr)
 
         print("Done.")
-
