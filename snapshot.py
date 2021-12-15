@@ -44,6 +44,9 @@ class ParticleData(Snapshot):
         self.flat_crit_density = self.mean_matter_density / self.OmegaMatter
 
         self.pos = self._hdf["PartType1"]["Coordinates"][:]
+        self.vel = None
+        self.ids = None
+
         if load_vels:
             self.vel = self._hdf["PartType1"]["Velocities"][:]
         if load_ids:
@@ -55,9 +58,9 @@ class ParticleData(Snapshot):
 
     def select_ids(self, ids):
         """Return indicies of particles given list of ids."""
-        if not self.load_ids:
+        if self.ids == None:
             raise RuntimeError("Cannot select particles, snapshot loaded with load_ids=False.")
-        return np.where(np.in1d(self.ids, ids))
+        return np.nonzero(np.isin(self.ids, ids))
 
 
 class HaloCatalog(Snapshot):
