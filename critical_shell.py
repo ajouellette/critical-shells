@@ -82,7 +82,7 @@ def find_critical_shell(pos_tree, center, part_mass, crit_dens, crit_ratio=2,
         r_mid = (r_low + r_high) / 2
         ind = pos_tree.query_radius(center.reshape(1, -1), r_mid)[0]
         if len(ind) == 0:
-            break # ideally shouldn't happen, some problem with convergence
+            break  # ideally shouldn't happen, some problem with convergence
         center = np.mean(pos_tree.data.base[ind], axis=0, dtype=float)
         density_mid = get_density(pos_tree, center, r_mid, part_mass)
 
@@ -187,7 +187,7 @@ if __name__ == "__main__":
         # some debug info
         print(f"Critical density at a = 100: {crit_dens_a100:.3e}")
         print(f"Particle mass: {pd.part_mass:.3e}")
-        print(f"Processing {len(fof_pos_all)} FoF groups on {n_ranks} MPI ranks" + \
+        print(f"Processing {len(fof_pos_all)} FoF groups on {n_ranks} MPI ranks" +
                 f", {len(fof_pos_all)//n_ranks} per rank")
 
         avg, res = divmod(len(fof_pos_all), n_ranks)

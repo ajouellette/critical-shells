@@ -6,7 +6,7 @@ import numba as nb
 from mpi4py import MPI
 from sklearn import neighbors
 import snapshot
-from utils import mean_pos, calc_vr_phys
+from utils import calc_vr_phys
 
 import time
 
@@ -99,7 +99,8 @@ if __name__ == "__main__":
         mask = pos_tree.query_radius(center.reshape(1, -1), r_cut)[0]
         pos_cut = pd.pos[mask]
         vel_cut = pd.vel[mask]
-        p_radii_cut, vr_physical = calc_vr_phys(pos_cut, vel_cut, center, radius, pd.a, pd.Hubble, pd.h)
+        p_radii_cut, vr_physical = calc_vr_phys(pos_cut, vel_cut, center, radius,
+                pd.a, pd.Hubble, pd.h)
 
         # find first radius after which vr_physical is no longer negative
         sorted_i = np.lexsort((vr_physical, p_radii_cut))

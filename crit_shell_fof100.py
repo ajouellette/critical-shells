@@ -109,4 +109,3 @@ if __name__ == "__main__":
             f.create_dataset("ParticleIDs", data=all_ids_fof)
 
         print("Done.")
-
