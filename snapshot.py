@@ -30,6 +30,7 @@ class Snapshot:
         self.OmegaLambda = self._hdf["Parameters"].attrs["OmegaLambda"]
         self.OmegaMatter = self._hdf["Parameters"].attrs["Omega0"]
         self.Hubble0 = self._hdf["Parameters"].attrs["Hubble"] * self._hdf["Parameters"].attrs["HubbleParam"]
+        self.h = self.Hubble0 / 100
         self.Hubble = self.Hubble0 * np.sqrt(self.OmegaMatter * self.a**-3 + (1-self.OmegaMatter-self.OmegaLambda) * self.a**-2 + self.OmegaLambda)
 
 
