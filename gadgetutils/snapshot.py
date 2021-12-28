@@ -1,6 +1,6 @@
 import h5py
 import numpy as np
-import utils
+from . import utils
 
 # Assumptions about GADGET hdf5 file:
 #   single snapshot file contains all output data for given step
