@@ -6,8 +6,8 @@ import numpy as np
 from mpi4py import MPI
 from scipy import spatial
 import pyfof
-from snapshot import ParticleData
-from utils import mean_pos_pbc, center_box_pbc
+from gadgetutils.snapshot import ParticleData
+from gadgetutils.utils import mean_pos_pbc, center_box_pbc
 
 import time
 

@@ -3,3 +3,5 @@ __pycache__
 *.out
 *.err
 .ipynb_checkpoints
+dist
+*.egg-info
