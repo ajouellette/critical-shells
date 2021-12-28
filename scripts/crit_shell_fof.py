@@ -14,8 +14,7 @@ from gadgetutils.utils import mean_pos_pbc, center_box_pbc
 import time
 
 
-if __name__ == "__main__":
-
+def main():
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     n_ranks = comm.Get_size()
@@ -166,3 +165,7 @@ if __name__ == "__main__":
                 "radii1": all_radii1, "densities": all_densities}
         with open(data_dir+"-analysis/fof_halos", 'wb') as f:
             pickle.dump(data, f)
+
+
+if __name__ == "__main__":
+    main()

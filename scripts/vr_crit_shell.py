@@ -31,8 +31,7 @@ def find_first_npositive(vector):
     return i
 
 
-if __name__ == "__main__":
-
+def main():
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     n_ranks = comm.Get_size()
@@ -153,3 +152,7 @@ if __name__ == "__main__":
             f.create_dataset("StdVr", data=all_std_vr)
 
         print("Done.")
+
+
+if __name__ == "__main__":
+    main()

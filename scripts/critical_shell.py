@@ -127,7 +127,7 @@ def print_dup_error(fof_i, sh_i, center, radius):
     print("Skipping duplicate: fof {}, sh {} ".format(fof_i, sh_i), center, radius)
 
 
-if __name__ == "__main__":
+def main():
     if profile:
         import cProfile
         pr = cProfile.Profile()
@@ -366,3 +366,7 @@ if __name__ == "__main__":
         with open('cpu_%d.txt' % rank, 'w') as output_file:
             sys.stdout = output_file
             pr.print_stats(sort='time')
+
+
+if __name__ == "__main__":
+    main()

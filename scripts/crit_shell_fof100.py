@@ -8,8 +8,7 @@ import pyfof
 from gadgetutils.snapshot import ParticleData
 
 
-if __name__ == "__main__":
-
+def main():
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     n_ranks = comm.Get_size()
@@ -109,3 +108,7 @@ if __name__ == "__main__":
             f.create_dataset("ParticleIDs", data=all_ids_fof)
 
         print("Done.")
+
+
+if __name__ == "__main__":
+    main()
