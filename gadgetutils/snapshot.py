@@ -19,43 +19,45 @@ from . import utils
 class Snapshot:
 
     def __init__(self, fname):
-        self._hdf = h5py.File(fname)
+        self.file_name = fname
         self.snap_num = int(fname.split('/')[-1].split('_')[-1].split('.')[0])
 
-        self.a = self._hdf["Header"].attrs["Time"]
-        self.z = self._hdf["Header"].attrs["Redshift"]
-        self.box_size = self._hdf["Header"].attrs["BoxSize"]
+        with h5py.File(fname) as f:
+            self.a = f["Header"].attrs["Time"]
+            self.z = f["Header"].attrs["Redshift"]
+            self.box_size = f["Header"].attrs["BoxSize"]
 
-        # Cosmology parameters
-        self.OmegaLambda = self._hdf["Parameters"].attrs["OmegaLambda"]
-        self.OmegaMatter = self._hdf["Parameters"].attrs["Omega0"]
-        self.Hubble0 = self._hdf["Parameters"].attrs["Hubble"] * self._hdf["Parameters"].attrs["HubbleParam"]
-        self.h = self.Hubble0 / 100
-        self.Hubble = self.Hubble0 * np.sqrt(self.OmegaMatter * self.a**-3 + (1-self.OmegaMatter-self.OmegaLambda) * self.a**-2 + self.OmegaLambda)
+            # Cosmology parameters
+            self.OmegaLambda = f["Parameters"].attrs["OmegaLambda"]
+            self.OmegaMatter = f["Parameters"].attrs["Omega0"]
+            self.Hubble0 = f["Parameters"].attrs["Hubble"] * f["Parameters"].attrs["HubbleParam"]
+            self.h = self.Hubble0 / 100
+            self.Hubble = self.Hubble0 * np.sqrt(self.OmegaMatter * self.a**-3 +
+                    (1-self.OmegaMatter-self.OmegaLambda) * self.a**-2 + self.OmegaLambda)
 
 
 class ParticleData(Snapshot):
+    """Load GADGET-4 snapshots to access particle data.
+    """
 
     def __init__(self, fname, load_vels=True, load_ids=True):
         super().__init__(fname)
-        self.n_parts = self._hdf["Header"].attrs["NumPart_Total"][1]
-        self.part_mass = self._hdf["Header"].attrs["MassTable"][1] * 1e10
-        self.mean_particle_sep = self.box_size / self.n_parts**(1/3)
-        self.mean_matter_density = self.n_parts * self.part_mass / self.box_size**3
-        self.flat_crit_density = self.mean_matter_density / self.OmegaMatter
 
-        self.pos = self._hdf["PartType1"]["Coordinates"][:]
-        self.vel = None
-        self.ids = None
+        with h5py.File(fname) as f:
+            self.n_parts = f["Header"].attrs["NumPart_Total"][1]
+            self.part_mass = f["Header"].attrs["MassTable"][1] * 1e10
+            self.mean_particle_sep = self.box_size / self.n_parts**(1/3)
+            self.mean_matter_density = self.n_parts * self.part_mass / self.box_size**3
+            self.flat_crit_density = self.mean_matter_density / self.OmegaMatter
 
-        if load_vels:
-            self.vel = self._hdf["PartType1"]["Velocities"][:]
-        if load_ids:
-            self.ids = self._hdf["PartType1"]["ParticleIDs"][:]
+            self.pos = f["PartType1"]["Coordinates"][:]
+            self.vel = None
+            self.ids = None
 
-        self._hdf.close()
-
-        self._dx = np.zeros(3)
+            if load_vels:
+                self.vel = f["PartType1"]["Velocities"][:]
+            if load_ids:
+                self.ids = f["PartType1"]["ParticleIDs"][:]
 
     def select_ids(self, ids):
         """Return indicies of particles given list of ids."""
@@ -65,19 +67,21 @@ class ParticleData(Snapshot):
 
 
 class HaloCatalog(Snapshot):
+    """Load GADGET-4 snapshot halo data (FoF and subfind clusters).
+    """
 
     def __init__(self, fname):
         super().__init__(fname)
-        self.n_halos = self._hdf["Header"].attrs["Ngroups_Total"]
 
-        self.pos = self._hdf["Group"]["GroupPos"][:]
-        self.vel = self._hdf["Group"]["GroupVel"][:]
-        self.masses = self._hdf["Group"]["GroupMass"][:] * 1e10
+        with h5py.File(fname) as f:
+            self.n_halos = f["Header"].attrs["Ngroups_Total"]
 
-        self.offsets = self._hdf["Group"]["GroupOffsetType"][:,1]
-        self.lengths = self._hdf["Group"]["GroupLen"][:]
+            self.pos = f["Group"]["GroupPos"][:]
+            self.vel = f["Group"]["GroupVel"][:]
+            self.masses = f["Group"]["GroupMass"][:] * 1e10
 
-        self._hdf.close()
+            self.offsets = f["Group"]["GroupOffsetType"][:,1]
+            self.lengths = f["Group"]["GroupLen"][:]
 
     def get_particle_ids(self, halo_i, particle_data):
         """Return ids of particles that are part of the given halo."""
