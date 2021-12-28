@@ -5,8 +5,8 @@ import numpy as np
 import numba as nb
 from mpi4py import MPI
 from sklearn import neighbors
-import snapshot
-from utils import calc_vr_phys
+from gadgetutils import snapshot
+from gadgetutils.utils import calc_vr_phys
 
 import time
 

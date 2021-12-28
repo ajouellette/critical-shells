@@ -5,7 +5,7 @@ import numpy as np
 from mpi4py import MPI
 from sklearn import neighbors
 import pyfof
-from snapshot import ParticleData
+from gadgetutils.snapshot import ParticleData
 
 
 if __name__ == "__main__":

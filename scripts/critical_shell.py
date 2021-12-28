@@ -6,8 +6,8 @@ from astropy.cosmology import FlatLambdaCDM
 import astropy.units as u
 from sklearn import neighbors
 import h5py
-from snapshot import ParticleData
-from utils import sphere_volume
+from gadgetutils.snapshot import ParticleData
+from gadgetutils.utils import sphere_volume
 
 import time
 profile = False
