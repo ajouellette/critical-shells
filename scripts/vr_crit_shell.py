@@ -5,7 +5,7 @@ import numpy as np
 import numba as nb
 from mpi4py import MPI
 from sklearn import neighbors
-from gadgetutils import snapshot
+from gadgetutils.snapshot import ParticleData
 from gadgetutils.utils import calc_vr_phys
 
 import time
@@ -50,7 +50,7 @@ def main():
         sys.exit(1)
 
     # read particle data on all processes
-    pd = snapshot.ParticleData(snap_file, load_ids=False)
+    pd = ParticleData(snap_file, load_ids=False)
     pos_tree = neighbors.BallTree(pd.pos)
 
     comm.Barrier()
