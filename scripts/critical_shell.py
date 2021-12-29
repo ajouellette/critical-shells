@@ -118,7 +118,7 @@ def check_duplicate(centers, radii, center, radius=0, check_dup_len=10):
     return -1
 
 
-def print_conv_error(center_conv, density_conv, fof_i, sh_i=0):
+def print_conv_error(c_conv, d_conv, fof_i, sh_i=0):
     print("Did not converge ({}, {}):".format(fof_i, sh_i),
             "center" if not c_conv else '', "density" if not d_conv else '')
 
