@@ -21,7 +21,6 @@ class Snapshot:
     def __init__(self, fname):
         self.file_name = fname
         self.snap_num = int(fname.split('/')[-1].split('_')[-1].split('.')[0])
-
         with h5py.File(fname) as f:
             self.a = f["Header"].attrs["Time"]
             self.z = f["Header"].attrs["Redshift"]
@@ -32,8 +31,8 @@ class Snapshot:
             self.OmegaMatter = f["Parameters"].attrs["Omega0"]
             self.Hubble0 = f["Parameters"].attrs["Hubble"] * f["Parameters"].attrs["HubbleParam"]
             self.h = self.Hubble0 / 100
-            self.Hubble = self.Hubble0 * np.sqrt(self.OmegaMatter * self.a**-3 +
-                    (1-self.OmegaMatter-self.OmegaLambda) * self.a**-2 + self.OmegaLambda)
+            self.Hubble = self.Hubble0 * np.sqrt(self.OmegaMatter * self.a**-3
+                        + (1-self.OmegaMatter-self.OmegaLambda) * self.a**-2 + self.OmegaLambda)
 
 
 class ParticleData(Snapshot):
@@ -42,7 +41,6 @@ class ParticleData(Snapshot):
 
     def __init__(self, fname, load_vels=True, load_ids=True):
         super().__init__(fname)
-
         with h5py.File(fname) as f:
             self.n_parts = f["Header"].attrs["NumPart_Total"][1]
             self.part_mass = f["Header"].attrs["MassTable"][1] * 1e10
@@ -53,7 +51,6 @@ class ParticleData(Snapshot):
             self.pos = f["PartType1"]["Coordinates"][:]
             self.vel = None
             self.ids = None
-
             if load_vels:
                 self.vel = f["PartType1"]["Velocities"][:]
             if load_ids:
@@ -61,7 +58,7 @@ class ParticleData(Snapshot):
 
     def select_ids(self, ids):
         """Return indicies of particles given list of ids."""
-        if self.ids == None:
+        if self.ids is None:
             raise RuntimeError("Cannot select particles, snapshot loaded with load_ids=False.")
         return np.nonzero(np.isin(self.ids, ids))
 
@@ -90,4 +87,5 @@ class HaloCatalog(Snapshot):
         return particle_data.ids[offset:offset+length]
 
     def calc_hmf(self, bins):
+        """Calculate HMF of FoF clusters."""
         return utils.calc_hmf(bins, self.masses, self.box_size)

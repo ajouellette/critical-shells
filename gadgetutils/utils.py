@@ -56,7 +56,8 @@ def center_box_pbc(coords, center, box_size):
     """
     dx = center + box_size*(center < -box_size/2) - box_size*(center >= box_size/2)
     coords_centered = coords - dx
-    coords_centered += box_size*(coords_centered < -box_size/2) - box_size*(coords_centered >= box_size/2)
+    coords_centered += box_size*(coords_centered < -box_size/2) \
+                    - box_size*(coords_centered >= box_size/2)
     return coords_centered
 
 
