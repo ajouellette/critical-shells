@@ -3,22 +3,18 @@ import sys
 import h5py
 import pickle
 import numpy as np
-import numba as nb
-from scipy import stats
 from mpi4py import MPI
 from astropy.cosmology import FlatLambdaCDM
 from astropy import units as u
-from sklearn import neighbors
 from scipy import spatial
 import pyfof
-from snapshot import ParticleData
-from utils import mean_pos, mean_pos_pbc
+from gadgetutils.snapshot import ParticleData
+from gadgetutils.utils import mean_pos_pbc, center_box_pbc
 
 import time
 
 
-if __name__ == "__main__":
-
+def main():
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     n_ranks = comm.Get_size()
@@ -86,16 +82,10 @@ if __name__ == "__main__":
         center1 = mean_pos_pbc(pos_shell, pd.box_size)
 
         # recenter box on CoM
-        dx = center1 + pd.box_size*(center1 < -pd.box_size/2) - pd.box_size*(center1 >= pd.box_size/2)
-        pos_shell_centered = pos_shell - dx
-        pos_shell_centered = pos_shell_centered + pd.box_size*(pos_shell_centered < -pd.box_size/2) - pd.box_size*(pos_shell_centered >= pd.box_size/2)
+        pos_shell_centered = center_box_pbc(pos_shell, center1, pd.box_size)
+
         p_radii = np.linalg.norm(pos_shell_centered, axis=1)
-        # sigmaclip to remove outliers - some particles move way further than expected when traced back
-        # tune value of high? (maybe need smaller value)
-        # probably don't actually need to sigmaclip when using IDs to match clusters
-        radius1_clip = np.max(stats.sigmaclip(p_radii, high=3.5)[0])
         radius1 = np.max(p_radii)
-        print(radius, radius1, radius1_clip, "clip" if radius1_clip < radius1/1.5 else "")
         #density = np.sum(mask_r1) * part_mass / (4/3 * np.pi * radius1**3)
         #print("a=100: {} {:.4f}   a=1: {} {:.4f}".format(center, radius, center1, radius1))
 
@@ -106,14 +96,13 @@ if __name__ == "__main__":
             n_fof[i] = 0
             continue
         # center positions before running FoF
-        dx = center1 + pd.box_size*(center1 < -pd.box_size/2) - pd.box_size*(center1 >= pd.box_size/2)
-        pos_centered = pd.pos[ind] - dx
-        pos_centered = pos_centered + pd.box_size*(pos_centered < -pd.box_size/2) - pd.box_size*(pos_centered >= pd.box_size/2)
+        pos_centered = center_box_pbc(pd.pos[ind], center1, pd.box_size)
 
         groups = pyfof.friends_of_friends(np.double(pos_centered), link_len)
         group_lens = [len(group) for group in groups]
         main_group = np.argmax(group_lens)
-        print("number of groups {} size of main group {} size at a=100 {}".format(len(groups), len(groups[main_group]), len(shell_ids)), time.perf_counter() - time_start)
+        print("number of groups {} size of main group {} size at a=100 {}".format(len(groups),
+            len(groups[main_group]), len(shell_ids)), time.perf_counter() - time_start)
 
         # Find FoF group with the highest number of matching particles
         best_count = 0
@@ -129,7 +118,7 @@ if __name__ == "__main__":
         print(main_group, best_i, group_lens[best_i])
         main_group = best_i
 
-        ## want percentage of particles within radius at a=1 that will collapse to halo at a=100
+        # want percentage of particles within radius at a=1 that will collapse to halo at a=100
         frac_collapse[i] = len(shell_ids) / len(ind)
 
         n_fof[i] = len(groups[main_group])
@@ -172,7 +161,11 @@ if __name__ == "__main__":
 
     if rank == 0:
         print("Gathered")
-        data = {"n":all_n_fof, "ids":all_ids_fof, "frac":all_frac_collapse, "radii1":all_radii1, "densities":all_densities}
+        data = {"n": all_n_fof, "ids": all_ids_fof, "frac": all_frac_collapse,
+                "radii1": all_radii1, "densities": all_densities}
         with open(data_dir+"-analysis/fof_halos", 'wb') as f:
             pickle.dump(data, f)
 
+
+if __name__ == "__main__":
+    main()

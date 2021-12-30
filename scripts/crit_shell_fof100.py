@@ -5,11 +5,10 @@ import numpy as np
 from mpi4py import MPI
 from sklearn import neighbors
 import pyfof
-from snapshot import ParticleData
+from gadgetutils.snapshot import ParticleData
 
 
-if __name__ == "__main__":
-
+def main():
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     n_ranks = comm.Get_size()
@@ -110,3 +109,6 @@ if __name__ == "__main__":
 
         print("Done.")
 
+
+if __name__ == "__main__":
+    main()

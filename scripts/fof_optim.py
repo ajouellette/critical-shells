@@ -6,16 +6,15 @@ import numpy as np
 from mpi4py import MPI
 from scipy import spatial
 import pyfof
-from snapshot import ParticleData
-from utils import mean_pos_pbc, center_box_pbc
+from gadgetutils.snapshot import ParticleData
+from gadgetutils.utils import mean_pos_pbc, center_box_pbc
 
 import time
 
 link_params = np.linspace(0.05, 0.6, 31)
 
 
-if __name__ == "__main__":
-
+def main():
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     n_ranks = comm.Get_size()
@@ -130,3 +129,7 @@ if __name__ == "__main__":
         data = {"n": all_n_fof, "link_params": link_params}
         with open(data_dir+"-analysis/fof_optim", 'wb') as f:
             pickle.dump(data, f)
+
+
+if __name__ == "__main__":
+    main()

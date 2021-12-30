@@ -6,8 +6,8 @@ from astropy.cosmology import FlatLambdaCDM
 import astropy.units as u
 from scipy import spatial
 import h5py
-from snapshot import ParticleData
-from utils import sphere_volume, mean_pos_pbc
+from gadgetutils.snapshot import ParticleData
+from gadgetutils.utils import sphere_volume
 
 import time
 profile = False
@@ -117,7 +117,7 @@ def check_duplicate(centers, radii, center, radius=0, check_dup_len=10):
     return -1
 
 
-def print_conv_error(center_conv, density_conv, fof_i, sh_i=0):
+def print_conv_error(c_conv, d_conv, fof_i, sh_i=0):
     print("Did not converge ({}, {}):".format(fof_i, sh_i),
             "center" if not c_conv else '', "density" if not d_conv else '')
 
@@ -126,7 +126,7 @@ def print_dup_error(fof_i, sh_i, center, radius):
     print("Skipping duplicate: fof {}, sh {} ".format(fof_i, sh_i), center, radius)
 
 
-if __name__ == "__main__":
+def main():
     if profile:
         import cProfile
         pr = cProfile.Profile()
@@ -189,7 +189,7 @@ if __name__ == "__main__":
         # some debug info
         print(f"Critical density at a = 100: {crit_dens_a100:.3e}")
         print(f"Particle mass: {pd.part_mass:.3e}")
-        print(f"Processing {len(fof_pos_all)} FoF groups on {n_ranks} MPI ranks" + \
+        print(f"Processing {len(fof_pos_all)} FoF groups on {n_ranks} MPI ranks" +
                 f", {len(fof_pos_all)//n_ranks} per rank")
 
         avg, res = divmod(len(fof_pos_all), n_ranks)
@@ -358,3 +358,7 @@ if __name__ == "__main__":
         with open('cpu_%d.txt' % rank, 'w') as output_file:
             sys.stdout = output_file
             pr.print_stats(sort='time')
+
+
+if __name__ == "__main__":
+    main()
