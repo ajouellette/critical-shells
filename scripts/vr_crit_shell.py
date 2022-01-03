@@ -4,9 +4,9 @@ import h5py
 import numpy as np
 import numba as nb
 from mpi4py import MPI
-from sklearn import neighbors
+from scipy import spatial
 from gadgetutils.snapshot import ParticleData
-from gadgetutils.utils import calc_vr_phys
+from gadgetutils.utils import calc_vr_phys, center_box_pbc
 
 import time
 
@@ -51,7 +51,9 @@ def main():
 
     # read particle data on all processes
     pd = ParticleData(snap_file, load_ids=False)
-    pos_tree = neighbors.BallTree(pd.pos)
+    pd.pos[pd.pos == 0] = 256.0
+    pos_tree = spatial.KDTree(pd.pos.astype(float) - np.min(pd.pos), boxsize=pd.box_size,
+            leafsize=30)
 
     comm.Barrier()
     if rank == 0:
@@ -95,11 +97,12 @@ def main():
         radius = radii[i]
         # calculate physical vr for particles in/near shell
         r_cut = 2 * radius
-        mask = pos_tree.query_radius(center.reshape(1, -1), r_cut)[0]
+        mask = pos_tree.query_ball_point(center, r_cut)
         pos_cut = pd.pos[mask]
         vel_cut = pd.vel[mask]
-        p_radii_cut, vr_physical = calc_vr_phys(pos_cut, vel_cut, center, radius,
-                pd.a, pd.Hubble, pd.h)
+        pos_cut = center_box_pbc(pos_cut, center, pd.box_size)
+        p_radii_cut, vr_physical = calc_vr_phys(pos_cut, vel_cut, np.array([0,0,0]),
+                                                radius, pd.a, pd.Hubble, pd.h)
 
         # find first radius after which vr_physical is no longer negative
         sorted_i = np.lexsort((vr_physical, p_radii_cut))
@@ -109,7 +112,7 @@ def main():
                            + p_radii_cut[sorted_i][::-1][index-1])
 
         # number of particles inside radius_vr
-        n_vr = pos_tree.query_radius(center.reshape(1, -1), radius_vr, count_only=True)
+        n_vr = pos_tree.query_ball_point(center, radius_vr, return_length=True)
 
         # calculate vr quantities inside shell
         mask_shell = p_radii_cut < radius
