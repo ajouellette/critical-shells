@@ -20,9 +20,8 @@ if __name__ == "__main__":
                           "h5py>=3.4",
                           "mpi4py>=3.1",
                           "astropy>=4.3",
-                          "pyfof==0.2.dev0"
+                          "pyfof @ git+https://github.com/ajouellette/pyfof"
                           ],
         packages=["gadgetutils"],
-        scripts=["scripts"],
         url="https://github.com/ajouellette/critical-shells",
     )
