@@ -90,10 +90,13 @@ def find_critical_shell(pos_tree, center, part_mass, crit_dens, crit_ratio=2,
             density_converged = True
             break
 
-        if (density_low / crit_dens - crit_ratio) * (density_mid / crit_dens - crit_ratio) < 0:
+        val_low = density_low / crit_dens - crit_ratio
+        val_mid = density_mid / crit_dens - crit_ratio
+        val_high = density_high / crit_dens - crit_ratio
+        if val_low * val_mid < 0:
             r_high = r_mid
             density_high = density_mid
-        elif (density_high / crit_dens - crit_ratio) * (density_mid / crit_dens - crit_ratio) < 0:
+        elif val_mid * val_high < 0:
             r_low = r_mid
             density_low = density_mid
         else:
@@ -163,7 +166,8 @@ def main():
     comm.Barrier()
     time_end = time.perf_counter()
     if rank == 0:
-        print(f"Time to load data and construct trees {(time_end - time_start)/60:.2f} minutes")
+        print(f"Time to load data and construct trees {(time_end - time_start)/60:.2f}"
+              + " minutes")
         print("Memory usage after tree construction:")
         os.system("free -h")
 
@@ -340,7 +344,8 @@ def main():
         masses = pd.part_mass * all_n_parts
 
         print(f"Finished in {(time_end - time_start)/60:.2f} minutes")
-        print(f"{len(all_radii)} critical shells found with more than {min_n_particles} particles")
+        print(f"{len(all_radii)} critical shells found with more than {min_n_particles}"
+              + " particles")
 
         # save data as hdf5
         if not profile:

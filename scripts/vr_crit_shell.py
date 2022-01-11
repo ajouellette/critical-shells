@@ -105,7 +105,8 @@ def main():
         sorted_i = np.lexsort((vr_physical, p_radii_cut))
         index = find_first(0, np.cumprod(vr_physical[sorted_i][::-1] > 0))
         # average of last negative and next
-        radius_vr = 0.5 * (p_radii_cut[sorted_i][::-1][index] + p_radii_cut[sorted_i][::-1][index-1])
+        radius_vr = 0.5 * (p_radii_cut[sorted_i][::-1][index]
+                           + p_radii_cut[sorted_i][::-1][index-1])
 
         # number of particles inside radius_vr
         n_vr = pos_tree.query_radius(center.reshape(1, -1), radius_vr, count_only=True)

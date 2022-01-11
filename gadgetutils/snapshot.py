@@ -29,10 +29,12 @@ class Snapshot:
             # Cosmology parameters
             self.OmegaLambda = f["Parameters"].attrs["OmegaLambda"]
             self.OmegaMatter = f["Parameters"].attrs["Omega0"]
-            self.Hubble0 = f["Parameters"].attrs["Hubble"] * f["Parameters"].attrs["HubbleParam"]
+            self.Hubble0 = f["Parameters"].attrs["Hubble"] \
+                * f["Parameters"].attrs["HubbleParam"]
             self.h = self.Hubble0 / 100
             self.Hubble = self.Hubble0 * np.sqrt(self.OmegaMatter * self.a**-3
-                        + (1-self.OmegaMatter-self.OmegaLambda) * self.a**-2 + self.OmegaLambda)
+                        + (1-self.OmegaMatter-self.OmegaLambda) * self.a**-2
+                        + self.OmegaLambda)
 
 
 class ParticleData(Snapshot):
