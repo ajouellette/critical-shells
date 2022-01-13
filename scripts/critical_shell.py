@@ -6,7 +6,7 @@ from astropy.cosmology import FlatLambdaCDM
 import astropy.units as u
 import h5py
 from gadgetutils.snapshot import ParticleData
-from gadgetutils.utils import sphere_volume
+from gadgetutils.utils import sphere_volume, mean_pos_pbc
 
 import time
 profile = False
@@ -80,7 +80,7 @@ def find_critical_shell(pos_tree, center, part_mass, box_size, crit_dens,
         r_mid = (r_low + r_high) / 2
         ind = pos_tree.query_ball_point(center, r_mid)
         if len(ind) == 0:
-            break # ideally shouldn't happen, some problem with convergence
+            break  # ideally shouldn't happen, some problem with convergence
         center = mean_pos_pbc(pos_tree.data[ind], box_size)
         density_mid = get_density(pos_tree, center, r_mid, part_mass)
 
