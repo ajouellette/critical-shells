@@ -4,7 +4,6 @@ import h5py
 import numpy as np
 import numba as nb
 from mpi4py import MPI
-from scipy import spatial
 from gadgetutils.snapshot import ParticleData
 from gadgetutils.utils import calc_vr_phys, center_box_pbc
 
@@ -49,11 +48,8 @@ def main():
             print("Error: could not find data file")
         sys.exit(1)
 
-    # read particle data on all processes
-    pd = ParticleData(snap_file, load_ids=False)
-    pd.pos[pd.pos == 0] = 256.0
-    pos_tree = spatial.KDTree(pd.pos.astype(float) - np.min(pd.pos), boxsize=pd.box_size,
-            leafsize=30)
+    # read particle data on all processes and construct trees
+    pd = ParticleData(snap_file, load_ids=False, make_tree=True)
 
     comm.Barrier()
     if rank == 0:
@@ -65,7 +61,7 @@ def main():
 
     # read all halo data on rank 0 and divide up work
     if rank == 0:
-        with h5py.File(data_dir + "-analysis/critical_shells.hdf5") as f:
+        with h5py.File(data_dir + "-analysis/critical_shells_scipy.hdf5") as f:
             all_centers = f["Centers"][:]
             all_radii = f["Radii"][:]
         avg, res = divmod(len(all_radii), n_ranks)
@@ -97,7 +93,7 @@ def main():
         radius = radii[i]
         # calculate physical vr for particles in/near shell
         r_cut = 2 * radius
-        mask = pos_tree.query_ball_point(center, r_cut)
+        mask = pd.tree.query_ball_point(center, r_cut)
         pos_cut = pd.pos[mask]
         vel_cut = pd.vel[mask]
         pos_cut = center_box_pbc(pos_cut, center, pd.box_size)
@@ -112,7 +108,7 @@ def main():
                            + p_radii_cut[sorted_i][::-1][index-1])
 
         # number of particles inside radius_vr
-        n_vr = pos_tree.query_ball_point(center, radius_vr, return_length=True)
+        n_vr = pd.tree.query_ball_point(center, radius_vr, return_length=True)
 
         # calculate vr quantities inside shell
         mask_shell = p_radii_cut < radius
@@ -146,7 +142,7 @@ def main():
     comm.Gatherv(std_vr, [all_std_vr, count, displ, MPI.DOUBLE], root=0)
 
     if rank == 0:
-        save_file = data_dir + "-analysis/vr_data.hdf5"
+        save_file = data_dir + "-analysis/vr_data_scipy.hdf5"
         print("Writing data to ", save_file)
         with h5py.File(save_file, 'w') as f:
             f.attrs["Nshells"] = len(all_radii_vr)

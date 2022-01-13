@@ -4,7 +4,6 @@ import numpy as np
 from mpi4py import MPI
 from astropy.cosmology import FlatLambdaCDM
 import astropy.units as u
-from scipy import spatial
 import h5py
 from gadgetutils.snapshot import ParticleData
 from gadgetutils.utils import sphere_volume
@@ -159,11 +158,7 @@ def main():
 
     time_start = time.perf_counter()
     # load particle data and construct tree of positions
-    pd = ParticleData(snap_file, load_vels=False)
-    # hack to convert positions in range (0,L] from GADGET to range [0,L) for the KDTree
-    pd.pos[pd.pos == 0] = 256.0
-    pos_tree = spatial.KDTree(pd.pos.astype(float) - np.min(pd.pos), boxsize=pd.box_size,
-            leafsize=30)
+    pd = ParticleData(snap_file, load_vels=False, make_tree=True)
 
     comm.Barrier()
     time_end = time.perf_counter()
@@ -238,7 +233,7 @@ def main():
             print("No subgroups, using fof position", fof_i)
             center_i = fof_pos[i]
 
-            center, radius, n, c_conv, d_conv = find_critical_shell(pos_tree, center_i,
+            center, radius, n, c_conv, d_conv = find_critical_shell(pd.tree, center_i,
                     pd.part_mass, pd.box_size, crit_dens_a100)
 
             if c_conv and d_conv and n >= min_n_particles:
@@ -247,7 +242,7 @@ def main():
                 centers.append(center)
                 n_parts.append(n)
                 parents.append([fof_i, 0])
-                ind = pos_tree.query_ball_point(center, radius)
+                ind = pd.tree.query_ball_point(center, radius)
                 part_ids = np.hstack((part_ids, pd.ids[ind]))
             else:
                 print_conv_error(c_conv, d_conv, fof_i)
@@ -264,7 +259,7 @@ def main():
                 print_dup_error(fof_i, j, centers[dup], radii[dup])
                 continue
 
-            center, radius, n, c_conv, d_conv = find_critical_shell(pos_tree, center_i,
+            center, radius, n, c_conv, d_conv = find_critical_shell(pd.tree, center_i,
                     pd.part_mass, pd.box_size, crit_dens_a100, findCOM=False)
 
             # check if final center is within a sphere already found
@@ -279,7 +274,7 @@ def main():
                 centers.append(center)
                 n_parts.append(n)
                 parents.append([fof_i, sh_i])
-                ind = pos_tree.query_ball_point(center, radius)
+                ind = pd.tree.query_ball_point(center, radius)
                 part_ids = np.hstack((part_ids, pd.ids[ind]))
             else:
                 print_conv_error(c_conv, d_conv, fof_i, sh_i)
