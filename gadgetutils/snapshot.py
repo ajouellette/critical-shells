@@ -1,22 +1,18 @@
 import h5py
 import numpy as np
+from scipy.spatial import KDTree
 from . import utils
-
-# Assumptions about GADGET hdf5 file:
-#   single snapshot file contains all output data for given step
-#   file name is of the format {}_number.hdf5
-#   cosmological simulation (in comoving coordinates)
-#   default code units: h^-1 Mpc, km/s, 1e10 h^-1 Msun
-#   only dark matter particles - PartType1
-#   all particles have the same mass
-
-# Note: all data loaded directly into memory
-#   might be a problem with very large simulations
-# For a 256**3 particle sim in single precision a ParticleData object will use ~0.44GB
-#  a 512**3 particle sim will use ~3.5GB
 
 
 class Snapshot:
+    """Base class to load GADGET-4 particle or group snapshot files.
+
+    Assumptions about GADGET hdf5 file:
+        single snapshot file contains all output data for given step
+        file name is of the format {}_number.hdf5
+        cosmological simulation (in comoving coordinates)
+        default code units: h^-1 Mpc, km/s, 1e10 h^-1 Msun
+    """
 
     def __init__(self, fname):
         self.file_name = fname
@@ -38,10 +34,21 @@ class Snapshot:
 
 
 class ParticleData(Snapshot):
-    """Load GADGET-4 snapshots to access particle data.
+    """Load GADGET-4 particle snapshots.
+
+    Additional assumptions:
+       only dark matter particles - PartType1
+       all particles have the same mass
+
+    Note: all data is loaded directly into memory,
+      might be a problem for very large simulations.
+    For a 256**3 particle sim in single precision a ParticleData object will use ~0.44GB
+      a 512**3 particle sim will use ~3.5GB.
+
+    Constructing trees as well will significantly more memory: https://github.com/scipy/scipy/issues/15065.
     """
 
-    def __init__(self, fname, load_vels=True, load_ids=True):
+    def __init__(self, fname, load_vels=True, load_ids=True, make_tree=False):
         super().__init__(fname)
         with h5py.File(fname) as f:
             self.n_parts = f["Header"].attrs["NumPart_Total"][1]
@@ -58,6 +65,12 @@ class ParticleData(Snapshot):
             if load_ids:
                 self.ids = f["PartType1"]["ParticleIDs"][:]
 
+            self.tree = None
+            if make_tree:
+                # make tree box size slightly larger to make sure it accomadates all the data
+                tree_box = self.box_size * (1 + 1e-8)
+                self.tree = spatial.KDTree(self.pos, boxsize=tree_box, leafsize=30)
+
     def select_ids(self, ids):
         """Return indicies of particles given list of ids."""
         if self.ids is None:
@@ -66,7 +79,7 @@ class ParticleData(Snapshot):
 
 
 class HaloCatalog(Snapshot):
-    """Load GADGET-4 snapshot halo data (FoF and subfind clusters).
+    """Load GADGET-4 group snapshots (FoF and SUBFIND groups).
     """
 
     def __init__(self, fname):
