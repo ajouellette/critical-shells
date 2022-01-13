@@ -45,7 +45,8 @@ class ParticleData(Snapshot):
     For a 256**3 particle sim in single precision a ParticleData object will use ~0.44GB
       a 512**3 particle sim will use ~3.5GB.
 
-    Constructing trees as well will significantly more memory: https://github.com/scipy/scipy/issues/15065.
+    Constructing trees as well will use significantly more memory:
+    https://github.com/scipy/scipy/issues/15065.
     """
 
     def __init__(self, fname, load_vels=True, load_ids=True, make_tree=False):
@@ -69,7 +70,7 @@ class ParticleData(Snapshot):
             if make_tree:
                 # make tree box size slightly larger to make sure it accomadates all the data
                 tree_box = self.box_size * (1 + 1e-8)
-                self.tree = spatial.KDTree(self.pos, boxsize=tree_box, leafsize=30)
+                self.tree = KDTree(self.pos, boxsize=tree_box, leafsize=30)
 
     def select_ids(self, ids):
         """Return indicies of particles given list of ids."""
