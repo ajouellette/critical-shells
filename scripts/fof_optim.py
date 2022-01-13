@@ -4,7 +4,6 @@ import h5py
 import pickle
 import numpy as np
 from mpi4py import MPI
-from scipy import spatial
 import pyfof
 from gadgetutils.snapshot import ParticleData
 from gadgetutils.utils import mean_pos_pbc, center_box_pbc
@@ -35,10 +34,7 @@ def main():
         sys.exit(1)
 
     # read particle data on all processes
-    pd = ParticleData(snap_file, load_vels=False)
-    # hack to convert positions in range (0,L] from GADGET to range [0,L) for the KDTree
-    pos_tree = spatial.KDTree(np.float64(pd.pos) - np.min(pd.pos),
-            boxsize=pd.box_size, leafsize=30)
+    pd = ParticleData(snap_file, load_vels=False, make_tree=True)
 
     # critical shell data
     with h5py.File(data_dir + "-analysis/critical_shells.hdf5") as f:
@@ -66,7 +62,7 @@ def main():
         shell_ids = all_ids[offset:offset+all_n[displ[rank] + i]]
 
         # get particle positions at a=1
-        rough_mask = pos_tree.query_ball_point(center, 25)
+        rough_mask = pd.tree.query_ball_point(center, 25)
         ind_ids = np.nonzero(np.isin(pd.ids[rough_mask], shell_ids))
         pos_shell = pd.pos[rough_mask][ind_ids]
 
@@ -83,7 +79,7 @@ def main():
         radius1 = np.max(p_radii)
 
         # run FoF
-        ind = pos_tree.query_ball_point(center1, radius1)
+        ind = pd.tree.query_ball_point(center1, radius1)
         if len(ind) < 2:
             print("Error not enough particles")
             n_fof[i] = 0

@@ -4,10 +4,9 @@ import numpy as np
 from mpi4py import MPI
 from astropy.cosmology import FlatLambdaCDM
 import astropy.units as u
-from sklearn import neighbors
 import h5py
 from gadgetutils.snapshot import ParticleData
-from gadgetutils.utils import sphere_volume
+from gadgetutils.utils import sphere_volume, mean_pos_pbc
 
 import time
 profile = False
@@ -15,17 +14,16 @@ profile = False
 
 def get_density(pos_tree, center, radius, part_mass):
     """Get density of a sphere from a tree of particle positions."""
-    n = pos_tree.query_radius(center.reshape(1, -1), radius, count_only=True)[0]
+    n = pos_tree.query_ball_point(center, radius, return_length=True)
     return n * part_mass / sphere_volume(radius, a=100)
 
 
-def find_critical_shell(pos_tree, center, part_mass, crit_dens, crit_ratio=2,
-        center_tol=1e-3, rcrit_tol=1e-5, maxiters=100, findCOM=True):
+def find_critical_shell(pos_tree, center, part_mass, box_size, crit_dens,
+        crit_ratio=2, center_tol=1e-3, rcrit_tol=1e-5, maxiters=100, findCOM=True):
     """Find a critical shell starting from given center.
 
     Parameters:
-    pos_tree: sklearn tree (either KDTree or BallTree) constructed from
-              particle postitions
+    pos_tree: scipy KDTree constructed from particle postitions
     center: ndarray (1,3) - Initial guess for center of shell
     part_mass: float - Particle mass
     crit_dens: float - Critical density of universe
@@ -47,11 +45,11 @@ def find_critical_shell(pos_tree, center, part_mass, crit_dens, crit_ratio=2,
         center_converged = False
         # find center of largest substructure
         for iters in range(1, 20):
-            ind = pos_tree.query_radius(center.reshape(1, -1), radius)[0]
+            ind = pos_tree.query_ball_point(center, radius)
             if len(ind) == 0:
                 radius += 5e-3
                 continue
-            new_center = np.mean(pos_tree.data.base[ind], axis=0, dtype=float)
+            new_center = mean_pos_pbc(pos_tree.data[ind], box_size)
             if np.linalg.norm(center - new_center) < center_tol:
                 center_converged = True
                 break
@@ -80,10 +78,10 @@ def find_critical_shell(pos_tree, center, part_mass, crit_dens, crit_ratio=2,
     density_converged = False
     for i in range(iters+1, maxiters):
         r_mid = (r_low + r_high) / 2
-        ind = pos_tree.query_radius(center.reshape(1, -1), r_mid)[0]
+        ind = pos_tree.query_ball_point(center, r_mid)
         if len(ind) == 0:
             break  # ideally shouldn't happen, some problem with convergence
-        center = np.mean(pos_tree.data.base[ind], axis=0, dtype=float)
+        center = mean_pos_pbc(pos_tree.data[ind], box_size)
         density_mid = get_density(pos_tree, center, r_mid, part_mass)
 
         if density_mid / crit_dens == crit_ratio:
@@ -108,7 +106,7 @@ def find_critical_shell(pos_tree, center, part_mass, crit_dens, crit_ratio=2,
             break
 
     # number of particles
-    n_parts = pos_tree.query_radius(center.reshape(1, -1), r_mid, count_only=True)[0]
+    n_parts = pos_tree.query_ball_point(center, r_mid, return_length=True)
 
     return center, r_mid, n_parts, center_converged, density_converged
 
@@ -160,8 +158,7 @@ def main():
 
     time_start = time.perf_counter()
     # load particle data and construct tree of positions
-    pd = ParticleData(snap_file, load_vels=False)
-    pos_tree = neighbors.BallTree(pd.pos)
+    pd = ParticleData(snap_file, load_vels=False, make_tree=True)
 
     comm.Barrier()
     time_end = time.perf_counter()
@@ -236,13 +233,8 @@ def main():
             print("No subgroups, using fof position", fof_i)
             center_i = fof_pos[i]
 
-            # ignore centers too close to box boundary
-            if np.sum(center_i < 2) or np.sum(center_i > pd.box_size - 2):
-                print("Skipping:", center_i, "too close to boundary")
-                continue
-
-            center, radius, n, c_conv, d_conv = find_critical_shell(pos_tree, center_i,
-                    pd.part_mass, crit_dens_a100)
+            center, radius, n, c_conv, d_conv = find_critical_shell(pd.tree, center_i,
+                    pd.part_mass, pd.box_size, crit_dens_a100)
 
             if c_conv and d_conv and n >= min_n_particles:
                 print("Found halo:", center, radius)
@@ -250,7 +242,7 @@ def main():
                 centers.append(center)
                 n_parts.append(n)
                 parents.append([fof_i, 0])
-                ind = pos_tree.query_radius(center.reshape(1, -1), radius)[0]
+                ind = pd.tree.query_ball_point(center, radius)
                 part_ids = np.hstack((part_ids, pd.ids[ind]))
             else:
                 print_conv_error(c_conv, d_conv, fof_i)
@@ -261,19 +253,14 @@ def main():
             sh_i = sh_offsets[fof_i] + j
             center_i = sh_pos[sh_i]
 
-            # ignore centers too close to box boundary
-            if np.sum(center_i < 2) or np.sum(center_i > pd.box_size - 2):
-                print("Skipping:", center_i, "too close to boundary")
-                continue
-
             # check if initial center is within a sphere already found
             dup = check_duplicate(centers, radii, center_i, check_dup_len=j)
             if dup != -1:
                 print_dup_error(fof_i, j, centers[dup], radii[dup])
                 continue
 
-            center, radius, n, c_conv, d_conv = find_critical_shell(pos_tree, center_i,
-                    pd.part_mass, crit_dens_a100, findCOM=False)
+            center, radius, n, c_conv, d_conv = find_critical_shell(pd.tree, center_i,
+                    pd.part_mass, pd.box_size, crit_dens_a100, findCOM=False)
 
             # check if final center is within a sphere already found
             dup = check_duplicate(centers, radii, center, radius=radius, check_dup_len=j)
@@ -287,7 +274,7 @@ def main():
                 centers.append(center)
                 n_parts.append(n)
                 parents.append([fof_i, sh_i])
-                ind = pos_tree.query_radius(center.reshape(1, -1), radius)[0]
+                ind = pd.tree.query_ball_point(center, radius)
                 part_ids = np.hstack((part_ids, pd.ids[ind]))
             else:
                 print_conv_error(c_conv, d_conv, fof_i, sh_i)
@@ -349,7 +336,7 @@ def main():
 
         # save data as hdf5
         if not profile:
-            catalog_file = data_dir + "-analysis/critical_shells.hdf5"
+            catalog_file = data_dir + "-analysis/critical_shells_scipy.hdf5"
             print("Saving filtered catalog to ", catalog_file)
             with h5py.File(catalog_file, 'w') as f:
                 # attributes

@@ -4,9 +4,8 @@ import h5py
 import numpy as np
 import numba as nb
 from mpi4py import MPI
-from sklearn import neighbors
 from gadgetutils.snapshot import ParticleData
-from gadgetutils.utils import calc_vr_phys
+from gadgetutils.utils import calc_vr_phys, center_box_pbc
 
 import time
 
@@ -49,9 +48,8 @@ def main():
             print("Error: could not find data file")
         sys.exit(1)
 
-    # read particle data on all processes
-    pd = ParticleData(snap_file, load_ids=False)
-    pos_tree = neighbors.BallTree(pd.pos)
+    # read particle data on all processes and construct trees
+    pd = ParticleData(snap_file, load_ids=False, make_tree=True)
 
     comm.Barrier()
     if rank == 0:
@@ -63,7 +61,7 @@ def main():
 
     # read all halo data on rank 0 and divide up work
     if rank == 0:
-        with h5py.File(data_dir + "-analysis/critical_shells.hdf5") as f:
+        with h5py.File(data_dir + "-analysis/critical_shells_scipy.hdf5") as f:
             all_centers = f["Centers"][:]
             all_radii = f["Radii"][:]
         avg, res = divmod(len(all_radii), n_ranks)
@@ -95,11 +93,12 @@ def main():
         radius = radii[i]
         # calculate physical vr for particles in/near shell
         r_cut = 2 * radius
-        mask = pos_tree.query_radius(center.reshape(1, -1), r_cut)[0]
+        mask = pd.tree.query_ball_point(center, r_cut)
         pos_cut = pd.pos[mask]
         vel_cut = pd.vel[mask]
-        p_radii_cut, vr_physical = calc_vr_phys(pos_cut, vel_cut, center, radius,
-                pd.a, pd.Hubble, pd.h)
+        pos_cut = center_box_pbc(pos_cut, center, pd.box_size)
+        p_radii_cut, vr_physical = calc_vr_phys(pos_cut, vel_cut, np.array([0,0,0]),
+                                                radius, pd.a, pd.Hubble, pd.h)
 
         # find first radius after which vr_physical is no longer negative
         sorted_i = np.lexsort((vr_physical, p_radii_cut))
@@ -109,7 +108,7 @@ def main():
                            + p_radii_cut[sorted_i][::-1][index-1])
 
         # number of particles inside radius_vr
-        n_vr = pos_tree.query_radius(center.reshape(1, -1), radius_vr, count_only=True)
+        n_vr = pd.tree.query_ball_point(center, radius_vr, return_length=True)
 
         # calculate vr quantities inside shell
         mask_shell = p_radii_cut < radius
@@ -143,7 +142,7 @@ def main():
     comm.Gatherv(std_vr, [all_std_vr, count, displ, MPI.DOUBLE], root=0)
 
     if rank == 0:
-        save_file = data_dir + "-analysis/vr_data.hdf5"
+        save_file = data_dir + "-analysis/vr_data_scipy.hdf5"
         print("Writing data to ", save_file)
         with h5py.File(save_file, 'w') as f:
             f.attrs["Nshells"] = len(all_radii_vr)
