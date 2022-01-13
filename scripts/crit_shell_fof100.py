@@ -3,9 +3,9 @@ import sys
 import h5py
 import numpy as np
 from mpi4py import MPI
-from sklearn import neighbors
 import pyfof
 from gadgetutils.snapshot import ParticleData
+from gadgetutils.utils import center_box_pbc
 
 
 def main():
@@ -27,8 +27,7 @@ def main():
         sys.exit(1)
 
     # read particle data on all processes
-    pd = ParticleData(snap_file, load_vels=False)
-    pos_tree = neighbors.BallTree(pd.pos)
+    pd = ParticleData(snap_file, load_vels=False, make_tree=True)
 
     # read all halo data on rank 0 and divide up work
     if rank == 0:
@@ -56,15 +55,17 @@ def main():
     ids_fof = []
 
     # FoF linking length
-    link_len = 0.2 * pd.box_size / pd.n_parts**(1/3)
+    link_len = 0.2 * pd.mean_particle_sep
     if rank == 0:
         print(f"Using FoF linking length {link_len:.2f} Mpc")
 
     for i in range(len(radii)):
         center = centers[i]
         radius = radii[i]
-        mask = pos_tree.query_radius(center.reshape(1, -1), 2*radius)[0]
+        # get particles within shell and re-center
+        mask = pd.tree.query_ball_point(center, 2*radius)
         pos_cut = pd.pos[mask]
+        pos_cut = center_box_pbc(pos_cut, center, pd.box_size)
         # run FoF
         if len(pos_cut) < 2:
             print("Error not enough particles")
