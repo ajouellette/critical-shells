@@ -6,7 +6,6 @@ import numpy as np
 from mpi4py import MPI
 from astropy.cosmology import FlatLambdaCDM
 from astropy import units as u
-from scipy import spatial
 import pyfof
 from gadgetutils.snapshot import ParticleData
 from gadgetutils.utils import mean_pos_pbc, center_box_pbc
@@ -35,9 +34,7 @@ def main():
         sys.exit(1)
 
     # read particle data on all processes
-    pd = ParticleData(snap_file1, load_vels=False)
-    # hack to convert positions in range (0,L] from GADGET to range [0,L) for the KDTree
-    pos_tree = spatial.KDTree(np.float64(pd.pos) - np.min(pd.pos), boxsize=256.0, leafsize=30)
+    pd = ParticleData(snap_file1, load_vels=False, make_tree=True)
 
     cosmo = FlatLambdaCDM(Om0=pd.OmegaMatter, H0=100)
     crit_density = cosmo.critical_density0.to(u.Msun / u.Mpc**3).value
@@ -71,7 +68,7 @@ def main():
         shell_ids = all_ids[offset:offset+all_n[displ[rank] + i]]
 
         # get particle positions at a=1
-        rough_mask = pos_tree.query_ball_point(center, 25)
+        rough_mask = pd.tree.query_ball_point(center, 25)
         ind_ids = np.nonzero(np.isin(pd.ids[rough_mask], shell_ids))
         pos_shell = pd.pos[rough_mask][ind_ids]
 
@@ -90,7 +87,7 @@ def main():
         #print("a=100: {} {:.4f}   a=1: {} {:.4f}".format(center, radius, center1, radius1))
 
         # run FoF
-        ind = pos_tree.query_ball_point(center1, radius1)
+        ind = pd.tree.query_ball_point(center1, radius1)
         if len(ind) < 2:
             print("Error not enough particles")
             n_fof[i] = 0
