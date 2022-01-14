@@ -1,3 +1,4 @@
+import warnings
 import h5py
 import numpy as np
 from scipy.spatial import KDTree
@@ -47,6 +48,7 @@ class ParticleData(Snapshot):
 
     Constructing trees as well will use significantly more memory:
     https://github.com/scipy/scipy/issues/15065.
+    For a 512**3 sim, the tree will add around 5GB of memory usage.
     """
 
     def __init__(self, fname, load_vels=True, load_ids=True, make_tree=False):
@@ -72,7 +74,18 @@ class ParticleData(Snapshot):
                 tree_box = self.box_size * (1 + 1e-8)
                 self.tree = KDTree(self.pos, boxsize=tree_box, leafsize=30)
 
-    def select_ids(self, ids):
+    def query_radius(self, center, radius, count_only=False):
+        """Return indicies of particles within radius of center."""
+        if self.tree is None:
+            warnings.warn("position tree not constructed, using brute force method.", RuntimeWarning)
+            mask = utils.get_sphere_mask(self.pos, center, radius)
+            if count_only:
+                return np.sum(mask)
+            return np.nonzero(mask)
+        else:
+            return self.tree.query_ball_point(center, radius, return_length=count_only)
+
+    def query_ids(self, ids):
         """Return indicies of particles given list of ids."""
         if self.ids is None:
             raise RuntimeError("Cannot select particles, snapshot loaded with load_ids=False.")
