@@ -12,20 +12,19 @@ import time
 profile = False
 
 
-def get_density(pos_tree, center, radius, part_mass):
-    """Get density of a sphere from a tree of particle positions."""
-    n = pos_tree.query_ball_point(center, radius, return_length=True)
-    return n * part_mass / sphere_volume(radius, a=100)
+def get_density(pd, center, radius):
+    """Get average enclosed density of a sphere from a ParticleData instance."""
+    n = pd.query_radius(center, radius, count_only=True)
+    return n * pd.part_mass / sphere_volume(radius, a=pd.a)
 
 
-def find_critical_shell(pos_tree, center, part_mass, box_size, crit_dens,
-        crit_ratio=2, center_tol=1e-3, rcrit_tol=1e-5, maxiters=100, findCOM=True):
+def find_critical_shell(pd, center, crit_dens, crit_ratio=2, center_tol=1e-3,
+        rcrit_tol=1e-5, maxiters=100, findCOM=True):
     """Find a critical shell starting from given center.
 
     Parameters:
-    pos_tree: scipy KDTree constructed from particle postitions
+    pd: a ParticleData instance
     center: ndarray (1,3) - Initial guess for center of shell
-    part_mass: float - Particle mass
     crit_dens: float - Critical density of universe
     crit_ratio: float - Ratio of critical shell density to critical density
     center_tol: float, optional - Tolerance for center convergence
@@ -45,11 +44,11 @@ def find_critical_shell(pos_tree, center, part_mass, box_size, crit_dens,
         center_converged = False
         # find center of largest substructure
         for iters in range(1, 20):
-            ind = pos_tree.query_ball_point(center, radius)
+            ind = pd.query_radius(center, radius)
             if len(ind) == 0:
                 radius += 5e-3
                 continue
-            new_center = mean_pos_pbc(pos_tree.data[ind], box_size)
+            new_center = mean_pos_pbc(pd.pos[ind], pd.box_size)
             if np.linalg.norm(center - new_center) < center_tol:
                 center_converged = True
                 break
@@ -61,12 +60,12 @@ def find_critical_shell(pos_tree, center, part_mass, box_size, crit_dens,
     # initial bracket for radius of critical shell
     r_low = 5e-4
     r_high = 0.5
-    density_low = get_density(pos_tree, center, r_low, part_mass)
+    density_low = get_density(pd, center, r_low)
     # potentially need a better lower bound if no particles within initial radius
     while density_low == 0:
         r_low += 5e-4
-        density_low = get_density(pos_tree, center, r_low, part_mass)
-    density_high = get_density(pos_tree, center, r_high, part_mass)
+        density_low = get_density(pd, center, r_low)
+    density_high = get_density(pd, center, r_high)
 
     # check that guess actually brackets root
     if not (density_low / crit_dens > crit_ratio and
@@ -78,11 +77,11 @@ def find_critical_shell(pos_tree, center, part_mass, box_size, crit_dens,
     density_converged = False
     for i in range(iters+1, maxiters):
         r_mid = (r_low + r_high) / 2
-        ind = pos_tree.query_ball_point(center, r_mid)
+        ind = pd.query_radius(center, r_mid)
         if len(ind) == 0:
             break  # ideally shouldn't happen, some problem with convergence
-        center = mean_pos_pbc(pos_tree.data[ind], box_size)
-        density_mid = get_density(pos_tree, center, r_mid, part_mass)
+        center = mean_pos_pbc(pd.pos[ind], pd.box_size)
+        density_mid = get_density(pd, center, r_mid)
 
         if density_mid / crit_dens == crit_ratio:
             density_converged = True
@@ -106,7 +105,7 @@ def find_critical_shell(pos_tree, center, part_mass, box_size, crit_dens,
             break
 
     # number of particles
-    n_parts = pos_tree.query_ball_point(center, r_mid, return_length=True)
+    n_parts = pd.query_radius(center, r_mid, count_only=True)
 
     return center, r_mid, n_parts, center_converged, density_converged
 
