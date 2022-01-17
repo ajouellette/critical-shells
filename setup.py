@@ -23,5 +23,6 @@ if __name__ == "__main__":
                           "pyfof @ git+https://github.com/ajouellette/pyfof"
                           ],
         packages=["gadgetutils"],
+        scripts=["scripts/parse_gadget_out.py"],
         url="https://github.com/ajouellette/critical-shells",
     )
