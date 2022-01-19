@@ -93,7 +93,7 @@ def main():
         radius = radii[i]
         # calculate physical vr for particles in/near shell
         r_cut = 2 * radius
-        mask = pd.tree.query_ball_point(center, r_cut)
+        mask = pd.query_radius(center, r_cut)
         pos_cut = pd.pos[mask]
         vel_cut = pd.vel[mask]
         pos_cut = center_box_pbc(pos_cut, center, pd.box_size)
@@ -108,7 +108,7 @@ def main():
                            + p_radii_cut[sorted_i][::-1][index-1])
 
         # number of particles inside radius_vr
-        n_vr = pd.tree.query_ball_point(center, radius_vr, return_length=True)
+        n_vr = pd.query_radius(center, radius_vr, count_only=True)
 
         # calculate vr quantities inside shell
         mask_shell = p_radii_cut < radius

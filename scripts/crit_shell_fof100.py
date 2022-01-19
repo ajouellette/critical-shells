@@ -63,7 +63,7 @@ def main():
         center = centers[i]
         radius = radii[i]
         # get particles within shell and re-center
-        mask = pd.tree.query_ball_point(center, 2*radius)
+        mask = pd.query_radius(center, 2*radius)
         pos_cut = pd.pos[mask]
         pos_cut = center_box_pbc(pos_cut, center, pd.box_size)
         # run FoF

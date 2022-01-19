@@ -62,7 +62,7 @@ def main():
         shell_ids = all_ids[offset:offset+all_n[displ[rank] + i]]
 
         # get particle positions at a=1
-        rough_mask = pd.tree.query_ball_point(center, 25)
+        rough_mask = pd.query_radius(center, 25)
         ind_ids = np.nonzero(np.isin(pd.ids[rough_mask], shell_ids))
         pos_shell = pd.pos[rough_mask][ind_ids]
 
@@ -79,7 +79,7 @@ def main():
         radius1 = np.max(p_radii)
 
         # run FoF
-        ind = pd.tree.query_ball_point(center1, radius1)
+        ind = pd.query_radius(center1, radius1)
         if len(ind) < 2:
             print("Error not enough particles")
             n_fof[i] = 0
