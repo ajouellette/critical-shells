@@ -96,25 +96,45 @@ class HaloCatalog(Snapshot):
     """Load GADGET-4 group snapshots (FoF and SUBFIND groups).
     """
 
-    def __init__(self, fname):
+    def __init__(self, fname, load_subhalos=False):
         super().__init__(fname)
 
         with h5py.File(fname) as f:
             self.n_halos = f["Header"].attrs["Ngroups_Total"]
+            self.n_subhalos = 0
 
             self.pos = f["Group"]["GroupPos"][:]
             self.vel = f["Group"]["GroupVel"][:]
             self.masses = f["Group"]["GroupMass"][:] * 1e10
-
             self.offsets = f["Group"]["GroupOffsetType"][:,1]
             self.lengths = f["Group"]["GroupLen"][:]
 
-    def get_particle_ids(self, halo_i, particle_data):
-        """Return ids of particles that are part of the given halo."""
+            if load_subhalos:
+                try:
+                    self.n_subhalos = f["Header"].attrs["Nsubhalos_Total"]
+                    self.pos_sh = f["Subhalo"]["SubhaloPos"][:]
+                    self.vel_sh = f["Subhalo"]["SubhaloVel"][:]
+                    self.masses_sh = f["Subhalo"]["SubhaloMass"][:] * 1e10
+                    self.offsets_sh = f["Subhalo"]["SubhaloOffsetType"][:,1]
+                    self.lengths_sh = f["Subhalo"]["SubhaloLen"][:]
+                except KeyError:
+                    raise ValueError("Cannot load subhalos, snapshot does not contain subhalo information.")
+
+    def get_particles(self, halo_i):
+        """Return indicies of particles that are part of the given halo."""
         offset = self.offsets[halo_i]
         length = self.lengths[halo_i]
+        return np.arange(offset, offset+length)
+
+    def get_particle_ids(self, halo_i, particle_data):
+        """Return ids of particles that are part of the given halo."""
+        particles = self.get_particles(halo_i)
         return particle_data.ids[offset:offset+length]
 
-    def calc_hmf(self, bins):
+    def calc_fof_hmf(self, bins):
         """Calculate HMF of FoF clusters."""
         return utils.calc_hmf(bins, self.masses, self.box_size)
+
+    def calc_subhalo_hmf(self, bins):
+        """Calculate HMF of SUBFIND clusters."""
+        return utils.calc_hmf(bins, self.masses_sh, self.box_size)
