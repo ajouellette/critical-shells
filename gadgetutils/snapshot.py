@@ -81,7 +81,7 @@ class ParticleData(Snapshot):
             mask = utils.get_sphere_mask(self.pos, center, radius)
             if count_only:
                 return np.sum(mask)
-            return np.nonzero(mask)
+            return np.nonzero(mask)[0]
         else:
             return self.tree.query_ball_point(center, radius, return_length=count_only)
 
