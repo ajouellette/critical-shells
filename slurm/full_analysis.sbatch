@@ -24,3 +24,6 @@ srun -d singleton python -u scripts/vr_crit_shell.py $data $snap100 && \
 srun -d singleton python -u scripts/crit_shell_fof100.py $data $snap100 && \
 srun -d singleton python -u scripts/crit_shell_fof.py $data $snap1 && \
 srun -d singleton python -u scripts/fof_optim.py $data $snap1
+
+mv slurm/logs/"$SLURM_JOBNAME".out slurm/logs/"$SLURM_JOBNAME"-"$n".out
+mv slurm/logs/"$SLURM_JOBNAME".err slurm/logs/"$SLURM_JOBNAME"-"$n".err

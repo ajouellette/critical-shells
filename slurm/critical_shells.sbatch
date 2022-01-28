@@ -18,3 +18,6 @@ snap100=$(python slurm/get_snapnum.py $PROJ/dm-l256-n$n-a100 100)
 
 date
 srun python -u scripts/critical_shell.py $PROJ/dm-l256-n$n-a100 $snap100
+
+mv slurm/logs/"$SLURM_JOBNAME".out slurm/logs/"$SLURM_JOBNAME"-"$n".out
+mv slurm/logs/"$SLURM_JOBNAME".err slurm/logs/"$SLURM_JOBNAME"-"$n".err
