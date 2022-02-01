@@ -10,6 +10,9 @@
 ##SBATCH --mail-type=BEGIN,END,FAIL
 ##SBATCH --mail-user=aaronjo2@illinois.edu
 
+set -u
+set -e
+
 n=512  # select simulation
 
 source ~/.bashrc
