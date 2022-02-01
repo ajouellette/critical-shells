@@ -18,6 +18,7 @@ snap1=$(python slurm/get_snapnum.py $PROJ/dm-l256-n$n-a100 1)
 
 date
 srun python -u scripts/crit_shell_fof.py $PROJ/dm-l256-n$n-a100 $snap1 && \
+date
 
 # rename outputs to include $n
 mv slurm/logs/"$SLURM_JOB_NAME".out slurm/logs/"$SLURM_JOB_NAME"-"$n".out && \
