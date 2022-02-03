@@ -89,18 +89,26 @@ def main():
 
         for link_i, link_len in enumerate(link_lens):
             groups = pyfof.friends_of_friends(np.double(pos_centered), link_len)
-            group_lens = [len(group) for group in groups]
+            group_lens = np.array([len(group) for group in groups])
             main_group = np.argmax(group_lens)
             print("number of groups {} size of main group {} size at a=100 {}".format(len(groups),
                 len(groups[main_group]), len(shell_ids)), time.perf_counter() - time_start)
 
             # Find FoF group with the highest number of matching particles
-            best_count = 0
-            best_i = np.argmax(group_lens)
-            for j in np.argsort(group_lens)[::-1][:10]:
+            len_diffs = np.abs(group_lens - len(shell_ids))
+            best_i = np.argmin(len_diffs)
+            fof_ids = pd.ids[ind][groups[best_i]]
+            best_count = np.sum(np.isin(shell_ids, fof_ids, assum_unique=True))
+            for j in np.argsort(group_lens)[::-1]:
                 ind_fof = groups[j]
+                if len(ind_fof) < best_count:
+                    break
                 fof_ids = pd.ids[ind][ind_fof]
-                match_count = np.sum(np.isin(shell_ids, fof_ids))
+                match_count = np.sum(np.isin(shell_ids, fof_ids, assume_unique=True))
+                if match_count == len(shell_ids):
+                    best_i = j
+                    best_count = match_count
+                    break
                 if match_count > best_count:
                     best_count = match_count
                     best_i = j

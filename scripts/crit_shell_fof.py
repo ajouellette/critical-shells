@@ -24,17 +24,17 @@ def main():
         sys.exit(1)
 
     data_dir = sys.argv[1]
-    snap_num1 = sys.argv[2]
-    snap_file1 = data_dir + "/snapshot_" + snap_num1 + ".hdf5"
+    snap_num = sys.argv[2]
+    snap_file = data_dir + "/snapshot_" + snap_num + ".hdf5"
     if rank == 0:
-        print("Using data files {}".format(snap_file1))
-    if not os.path.exists(snap_file1):
+        print("Using data files {}".format(snap_file))
+    if not os.path.exists(snap_file):
         if rank == 0:
             print("Error: could not find data files")
         sys.exit(1)
 
     # read particle data on all processes
-    pd = ParticleData(snap_file1, load_vels=False, make_tree=True)
+    pd = ParticleData(snap_file, load_vels=False, make_tree=True)
 
     cosmo = FlatLambdaCDM(Om0=pd.OmegaMatter, H0=100)
     crit_density = cosmo.critical_density0.to(u.Msun / u.Mpc**3).value
@@ -56,7 +56,7 @@ def main():
     densities = np.zeros(count[rank])
     ids_fof = []
 
-    link_len = 0.2 * pd.box_size / pd.n_parts**(1/3)
+    link_len = 0.2 * pd.mean_particle_sep
     if rank == 0:
         print(f"Using linking length {link_len} Mpc")
 
@@ -96,23 +96,31 @@ def main():
         pos_centered = center_box_pbc(pd.pos[ind], center1, pd.box_size)
 
         groups = pyfof.friends_of_friends(np.double(pos_centered), link_len)
-        group_lens = [len(group) for group in groups]
+        group_lens = np.array([len(group) for group in groups])
         main_group = np.argmax(group_lens)
         print("number of groups {} size of main group {} size at a=100 {}".format(len(groups),
             len(groups[main_group]), len(shell_ids)), time.perf_counter() - time_start)
 
         # Find FoF group with the highest number of matching particles
-        best_count = 0
-        best_i = np.argmax(group_lens)
-        for j in np.argsort(group_lens)[::-1][:10]:
+        len_diffs = np.abs(group_lens - len(shell_ids))
+        best_i = np.argmin(len_diffs)
+        fof_ids = pd.ids[ind][groups[best_i]]
+        best_count = np.sum(np.isin(shell_ids, fof_ids, assume_unique=True))
+        for j in np.argsort(group_lens)[::-1]:
             ind_fof = groups[j]
+            if len(ind_fof) < best_count:
+                break
             fof_ids = pd.ids[ind][ind_fof]
-            match_count = np.sum(np.isin(shell_ids, fof_ids))
+            match_count = np.sum(np.isin(shell_ids, fof_ids, assume_unique=True))
+            if match_count == len(shell_ids):
+                best_i = j
+                best_count = match_count
+                break
             if match_count > best_count:
                 best_count = match_count
                 best_i = j
 
-        print(main_group, best_i, group_lens[best_i])
+        print(main_group, best_i, group_lens[best_i], best_count / len(shell_ids))
         main_group = best_i
 
         # want percentage of particles within radius at a=1 that will collapse to halo at a=100
