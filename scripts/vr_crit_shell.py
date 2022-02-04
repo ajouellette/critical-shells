@@ -61,12 +61,13 @@ def main():
 
     # read all halo data on rank 0 and divide up work
     if rank == 0:
-        with h5py.File(data_dir + "-analysis/critical_shells_scipy.hdf5") as f:
+        with h5py.File(data_dir + "-analysis/critical_shells.hdf5") as f:
             all_centers = f["Centers"][:]
             all_radii = f["Radii"][:]
         avg, res = divmod(len(all_radii), n_ranks)
         count = np.array([avg+1 if r < res else avg for r in range(n_ranks)])
         displ = np.array([sum(count[:r]) for r in range(n_ranks)])
+        print(f"Analyzing {len(all_centers)} critical shells")
     else:
         all_centers = None
         all_radii = None
@@ -142,7 +143,7 @@ def main():
     comm.Gatherv(std_vr, [all_std_vr, count, displ, MPI.DOUBLE], root=0)
 
     if rank == 0:
-        save_file = data_dir + "-analysis/vr_data_scipy.hdf5"
+        save_file = data_dir + "-analysis/vr_data.hdf5"
         print("Writing data to ", save_file)
         with h5py.File(save_file, 'w') as f:
             f.attrs["Nshells"] = len(all_radii_vr)
