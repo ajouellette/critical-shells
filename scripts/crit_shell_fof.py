@@ -12,6 +12,8 @@ from gadgetutils.utils import mean_pos_pbc, center_box_pbc
 
 import time
 
+link_params = np.linspace(0.05, 0.6, 31)
+
 
 def main():
     comm = MPI.COMM_WORLD
@@ -50,18 +52,17 @@ def main():
     count = np.array([avg+1 if r < res else avg for r in range(n_ranks)])
     displ = np.array([sum(count[:r]) for r in range(n_ranks)])
 
-    n_fof = np.zeros(count[rank], dtype=int)
-    frac_collapse = np.zeros(count[rank], dtype=float)
-    radii1 = np.zeros(count[rank])
-    densities = np.zeros(count[rank])
-    ids_fof = []
-
-    link_len = 0.2 * pd.mean_particle_sep
+    link_lens = link_params * pd.mean_particle_sep
     if rank == 0:
-        print(f"Using linking length {link_len} Mpc")
+        print(f"Mean particle separation {pd.mean_particle_sep:.2f} Mpc")
+        print(f"Using linking parameters {link_params}")
+
+    n_fof = np.zeros((count[rank], len(link_params)), dtype=int)
+    radii1 = np.zeros(count[rank])
+    #frac_collapse = np.zeros(count[rank], dtype=float)
+    #densities = np.zeros(count[rank])
 
     for i in range(count[rank]):
-        time_start = time.perf_counter()
         center = all_centers[displ[rank] + i]
         radius = all_radii[displ[rank] + i]
         offset = sum(all_n[:displ[rank] + i])
@@ -83,6 +84,7 @@ def main():
 
         p_radii = np.linalg.norm(pos_shell_centered, axis=1)
         radius1 = np.max(p_radii)
+
         #density = np.sum(mask_r1) * part_mass / (4/3 * np.pi * radius1**3)
         #print("a=100: {} {:.4f}   a=1: {} {:.4f}".format(center, radius, center1, radius1))
 
@@ -95,39 +97,39 @@ def main():
         # center positions before running FoF
         pos_centered = center_box_pbc(pd.pos[ind], center1, pd.box_size)
 
-        groups = pyfof.friends_of_friends(np.double(pos_centered), link_len)
-        group_lens = np.array([len(group) for group in groups])
-        main_group = np.argmax(group_lens)
-        print("number of groups {} size of main group {} size at a=100 {}".format(len(groups),
-            len(groups[main_group]), len(shell_ids)), time.perf_counter() - time_start)
+        for link_i, link_len in enumerate(link_lens):
+            groups = pyfof.friends_of_friends(np.double(pos_centered), link_len)
+            group_lens = np.array([len(group) for group in groups])
+            #main_group = np.argmax(group_lens)
+            #print("number of groups {} size of main group {} size at a=100 {}".format(len(groups),
+            #    len(groups[main_group]), len(shell_ids)), time.perf_counter() - time_start)
 
-        # Find FoF group with the highest number of matching particles
-        len_diffs = np.abs(group_lens - len(shell_ids))
-        best_i = np.argmin(len_diffs)
-        fof_ids = pd.ids[ind][groups[best_i]]
-        best_count = np.sum(np.isin(shell_ids, fof_ids, assume_unique=True))
-        for j in np.argsort(group_lens)[::-1]:
-            ind_fof = groups[j]
-            if len(ind_fof) < best_count:
-                break
-            fof_ids = pd.ids[ind][ind_fof]
-            match_count = np.sum(np.isin(shell_ids, fof_ids, assume_unique=True))
-            if match_count == len(shell_ids):
-                best_i = j
-                best_count = match_count
-                break
-            if match_count > best_count:
-                best_count = match_count
-                best_i = j
+            # Find FoF group with the highest number of matching particles
+            len_diffs = np.abs(group_lens - len(shell_ids))
+            best_i = np.argmin(len_diffs)
+            fof_ids = pd.ids[ind][groups[best_i]]
+            best_count = np.sum(np.isin(shell_ids, fof_ids, assume_unique=True))
+            for j in np.argsort(group_lens)[::-1]:
+                ind_fof = groups[j]
+                if len(ind_fof) < best_count:
+                    break
+                fof_ids = pd.ids[ind][ind_fof]
+                match_count = np.sum(np.isin(shell_ids, fof_ids, assume_unique=True))
+                if match_count == len(shell_ids):
+                    best_i = j
+                    best_count = match_count
+                    break
+                if match_count > best_count:
+                    best_count = match_count
+                    best_i = j
 
-        print(main_group, best_i, group_lens[best_i], best_count / len(shell_ids))
-        main_group = best_i
+            #print(main_group, best_i, group_lens[best_i], best_count / len(shell_ids))
+            main_group = best_i
+
+            n_fof[i,link_i] = len(groups[main_group])
 
         # want percentage of particles within radius at a=1 that will collapse to halo at a=100
-        frac_collapse[i] = len(shell_ids) / len(ind)
-
-        n_fof[i] = len(groups[main_group])
-        ids_fof = ids_fof + groups[main_group]
+        #frac_collapse[i] = len(shell_ids) / len(ind)
 
         radii1[i] = radius1
         #densities[i] = density / crit_density
@@ -135,39 +137,28 @@ def main():
 
     comm.Barrier()
 
-    ids_fof = np.array(ids_fof)
-    length = np.array(len(ids_fof))
-    total_length = np.array(0)
-    comm.Reduce(length, total_length, op=MPI.SUM, root=0)
-    lengths = np.array(comm.gather(length, root=0))
-    displ_ids = 0
-
-    comm.Barrier()
     if rank == 0:
         print("Done")
-        all_n_fof = np.zeros_like(all_radii, dtype=int)
-        all_ids_fof = np.zeros(total_length, dtype=int)
-        all_frac_collapse = np.zeros_like(all_radii, dtype=float)
+        all_n_fof = np.zeros((len(all_radii), len(link_lens)), dtype=int)
         all_radii1 = np.zeros_like(all_radii)
-        all_densities = np.zeros_like(all_radii)
-        displ_ids = np.array([sum(lengths[:r]) for r in range(n_ranks)])
+        #all_frac_collapse = np.zeros_like(all_radii, dtype=float)
+        #all_densities = np.zeros_like(all_radii)
     else:
         all_n_fof = None
-        all_ids_fof = None
-        all_frac_collapse = None
         all_radii1 = None
-        all_densities = None
+        #all_frac_collapse = None
+        #all_densities = None
 
-    comm.Gatherv(n_fof, [all_n_fof, count, displ, MPI.LONG], root=0)
-    comm.Gatherv(ids_fof, [all_ids_fof, lengths, displ_ids, MPI.LONG], root=0)
-    comm.Gatherv(frac_collapse, [all_frac_collapse, count, displ, MPI.DOUBLE], root=0)
+    comm.Gatherv(n_fof, [all_n_fof, count*len(link_lens), displ*len(link_lens),
+        MPI.LONG], root=0)
     comm.Gatherv(radii1, [all_radii1, count, displ, MPI.DOUBLE], root=0)
-    comm.Gatherv(densities, [all_densities, count, displ, MPI.DOUBLE], root=0)
+    #comm.Gatherv(frac_collapse, [all_frac_collapse, count, displ, MPI.DOUBLE], root=0)
+    #comm.Gatherv(densities, [all_densities, count, displ, MPI.DOUBLE], root=0)
 
     if rank == 0:
         print("Gathered")
-        data = {"n": all_n_fof, "ids": all_ids_fof, "frac": all_frac_collapse,
-                "radii1": all_radii1, "densities": all_densities}
+        data = {"n": all_n_fof, "link_params": link_params,
+                "radii1": all_radii1}
         with open(data_dir+"-analysis/fof_halos", 'wb') as f:
             pickle.dump(data, f)
 
