@@ -98,7 +98,7 @@ def main():
             len_diffs = np.abs(group_lens - len(shell_ids))
             best_i = np.argmin(len_diffs)
             fof_ids = pd.ids[ind][groups[best_i]]
-            best_count = np.sum(np.isin(shell_ids, fof_ids, assum_unique=True))
+            best_count = np.sum(np.isin(shell_ids, fof_ids, assume_unique=True))
             for j in np.argsort(group_lens)[::-1]:
                 ind_fof = groups[j]
                 if len(ind_fof) < best_count:
