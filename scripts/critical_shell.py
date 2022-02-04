@@ -232,8 +232,7 @@ def main():
             print("No subgroups, using fof position", fof_i)
             center_i = fof_pos[i]
 
-            center, radius, n, c_conv, d_conv = find_critical_shell(pd.tree, center_i,
-                    pd.part_mass, pd.box_size, crit_dens_a100)
+            center, radius, n, c_conv, d_conv = find_critical_shell(pd, center_i, crit_dens_a100)
 
             if c_conv and d_conv and n >= min_n_particles:
                 print("Found halo:", center, radius)
@@ -241,7 +240,7 @@ def main():
                 centers.append(center)
                 n_parts.append(n)
                 parents.append([fof_i, 0])
-                ind = pd.tree.query_ball_point(center, radius)
+                ind = pd.query_radius(center, radius)
                 part_ids = np.hstack((part_ids, pd.ids[ind]))
             else:
                 print_conv_error(c_conv, d_conv, fof_i)
@@ -258,8 +257,7 @@ def main():
                 print_dup_error(fof_i, j, centers[dup], radii[dup])
                 continue
 
-            center, radius, n, c_conv, d_conv = find_critical_shell(pd.tree, center_i,
-                    pd.part_mass, pd.box_size, crit_dens_a100, findCOM=False)
+            center, radius, n, c_conv, d_conv = find_critical_shell(pd, center_i, crit_dens_a100, findCOM=False)
 
             # check if final center is within a sphere already found
             dup = check_duplicate(centers, radii, center, radius=radius, check_dup_len=j)
@@ -273,7 +271,7 @@ def main():
                 centers.append(center)
                 n_parts.append(n)
                 parents.append([fof_i, sh_i])
-                ind = pd.tree.query_ball_point(center, radius)
+                ind = pd.query_radius(center, radius)
                 part_ids = np.hstack((part_ids, pd.ids[ind]))
             else:
                 print_conv_error(c_conv, d_conv, fof_i, sh_i)
@@ -335,7 +333,7 @@ def main():
 
         # save data as hdf5
         if not profile:
-            catalog_file = data_dir + "-analysis/critical_shells_scipy.hdf5"
+            catalog_file = data_dir + "-analysis/critical_shells.hdf5"
             print("Saving filtered catalog to ", catalog_file)
             with h5py.File(catalog_file, 'w') as f:
                 # attributes
