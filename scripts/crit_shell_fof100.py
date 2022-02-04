@@ -34,6 +34,7 @@ def main():
         with h5py.File(data_dir + "-analysis/critical_shells.hdf5") as f:
             all_centers = f["Centers"][:]
             all_radii = f["Radii"][:]
+            all_n_shell = f["Nparticles"][:]
         avg, res = divmod(len(all_radii), n_ranks)
         count = np.array([avg+1 if r < res else avg for r in range(n_ranks)])
         displ = np.array([sum(count[:r]) for r in range(n_ranks)])
@@ -47,9 +48,11 @@ def main():
 
     centers = np.zeros((count[rank], 3))
     radii = np.zeros(count[rank])
+    n_shell = np.zeros(count[rank], dtype=int)
 
     comm.Scatterv([all_radii, count, displ, MPI.DOUBLE], radii, root=0)
     comm.Scatterv([all_centers, 3*count, 3*displ, MPI.DOUBLE], centers, root=0)
+    comm.Scatterv([all_n_shell, count, displ, MPI.LONG], n_shell, root=0)
 
     n_fof = np.zeros_like(radii, dtype=int)
     ids_fof = []
@@ -73,7 +76,7 @@ def main():
         groups = pyfof.friends_of_friends(np.double(pos_cut), link_len)
         group_lens = [len(groups[i]) for i in range(len(groups))]
         main_group = np.argmax(group_lens)
-        #print("number of groups {} size of main group {} size of crit shell {}".format(len(groups), len(groups[main_group]), np.sum(p_radii<radius)))
+        print(f"size of crit shell {n_shell[i]}, size of main FoF group {group_lens[main_group]}")
 
         n_fof[i] = len(groups[main_group])
         ids_fof = ids_fof + groups[main_group]
