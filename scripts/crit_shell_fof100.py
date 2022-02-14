@@ -41,6 +41,7 @@ def main():
     else:
         all_centers = None
         all_radii = None
+        all_n_shell = None
         count = np.zeros(n_ranks, dtype=int)
         displ = 0
 
