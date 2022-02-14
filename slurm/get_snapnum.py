@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import sys
 
 
@@ -7,6 +8,8 @@ def find_line(file, value):
     """
     diff = 1e4  # big number
     for i, line in enumerate(file):
+        if line.strip() == "":  # blank lines indicate skipped outputs
+            continue
         line_value = float(line.strip())
         new_diff = abs(value - line_value)
         if new_diff < diff:
