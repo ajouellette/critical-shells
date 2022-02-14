@@ -155,6 +155,9 @@ def main():
             print("Error: data files not found")
         sys.exit(1)
 
+    if rank == 0:
+        print(f"Using data file {snap_file}")
+        print(f"And FoF group catalog {fof_file}")
     time_start = time.perf_counter()
     # load particle data and construct tree of positions
     pd = ParticleData(snap_file, load_vels=False, make_tree=True)
@@ -185,6 +188,8 @@ def main():
 
     if rank == 0:
         # some debug info
+        print()
+        print(f"a = {pd.a:.2f}")
         print(f"Critical density at a = 100: {crit_dens_a100:.3e}")
         print(f"Particle mass: {pd.part_mass:.3e}")
         print(f"Processing {len(fof_pos_all)} FoF groups on {n_ranks} MPI ranks" +

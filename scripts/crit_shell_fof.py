@@ -138,7 +138,7 @@ def main():
     comm.Barrier()
 
     if rank == 0:
-        print("Done")
+        print("Finished.")
         all_n_fof = np.zeros((len(all_radii), len(link_lens)), dtype=int)
         all_radii1 = np.zeros_like(all_radii)
         #all_frac_collapse = np.zeros_like(all_radii, dtype=float)
@@ -156,11 +156,13 @@ def main():
     #comm.Gatherv(densities, [all_densities, count, displ, MPI.DOUBLE], root=0)
 
     if rank == 0:
-        print("Gathered")
         data = {"n": all_n_fof, "link_params": link_params,
                 "radii1": all_radii1}
-        with open(data_dir+"-analysis/fof_halos", 'wb') as f:
+        save_file = data_dir+"-analysis/fof_halos"
+        print("Writing data to", save_file)
+        with open(save_file, 'wb') as f:
             pickle.dump(data, f)
+        print("Done.")
 
 
 if __name__ == "__main__":
