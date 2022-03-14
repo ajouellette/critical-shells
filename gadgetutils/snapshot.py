@@ -5,6 +5,28 @@ from scipy.spatial import KDTree
 from . import utils
 
 
+def load(fname, **kwargs):
+    """Load a .hdf5 GADGET output file."""
+    particle_snap = False
+    group_snap = False
+    with h5py.File(fname) as f:
+        try:
+            f["Header"].attrs["Ngroups_Total"]
+            group_snap = True
+        except KeyError:
+            try:
+                f["PartType1"]
+                particle_snap = True
+            except KeyError:
+                pass
+    if group_snap:
+        return HaloCatalog(fname, **kwargs)
+    elif particle_snap:
+        return ParticleData(fname, **kwargs)
+    else:
+        raise ValueError(f"File {fname} not recognized as a particle or group snapshot")
+
+
 class Snapshot:
     """Base class to load GADGET-4 particle or group snapshot files.
 
