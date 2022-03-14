@@ -109,11 +109,12 @@ class HaloCatalog(Snapshot):
             self.n_halos = f["Header"].attrs["Ngroups_Total"]
             self.n_subhalos = 0
 
-            self.pos = f["Group"]["GroupPos"][:]
-            self.vel = f["Group"]["GroupVel"][:]
-            self.masses = f["Group"]["GroupMass"][:] * 1e10
-            self.offsets = f["Group"]["GroupOffsetType"][:,1]
-            self.lengths = f["Group"]["GroupLen"][:]
+            if self.n_halos > 0:
+                self.pos = f["Group"]["GroupPos"][:]
+                self.vel = f["Group"]["GroupVel"][:]
+                self.masses = f["Group"]["GroupMass"][:] * 1e10
+                self.offsets = f["Group"]["GroupOffsetType"][:,1]
+                self.lengths = f["Group"]["GroupLen"][:]
 
             if load_subhalos:
                 try:
