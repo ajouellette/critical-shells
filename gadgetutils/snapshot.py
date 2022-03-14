@@ -17,7 +17,10 @@ class Snapshot:
 
     def __init__(self, fname):
         self.file_name = fname
-        self.snap_num = int(fname.split('/')[-1].split('_')[-1].split('.')[0])
+        try:
+            self.snap_num = int(fname.split('/')[-1].split('_')[-1].split('.')[0])
+        except ValueError:
+            self.snap_num = 0
         with h5py.File(fname) as f:
             self.a = f["Header"].attrs["Time"]
             self.z = f["Header"].attrs["Redshift"]
@@ -78,6 +81,9 @@ class ParticleData(Snapshot):
         """Return indicies of particles within radius of center."""
         if self.tree is None:
             warnings.warn("position tree not constructed, using brute force method.", RuntimeWarning)
+            if radius > self.box_size:
+                warnings.warn("radius is greater than box_size/2, periodic BC are not implemented with brute force method",
+                        RuntimeWarning)
             mask = utils.get_sphere_mask(self.pos, center, radius)
             if count_only:
                 return np.sum(mask)
