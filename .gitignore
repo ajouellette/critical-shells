@@ -3,6 +3,8 @@ __pycache__
 .ipynb_checkpoints
 dist
 *.egg-info
+build
+*.so
 
 slurm/logs
 *.out

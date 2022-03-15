@@ -1,4 +1,5 @@
 from setuptools import setup
+from Cython.Build import cythonize
 
 
 PACKAGENAME = "critical-shells"
@@ -13,6 +14,8 @@ if __name__ == "__main__":
         license="LICENSE",
         description="GADGET simulation analysis",
         long_description=open("README.md").read(),
+        setup_requires=["Cython>=0.29",
+            ],
         install_requires=["numpy>=1.20",
                           "scipy>=1.7",
                           "scikit-learn>=1.0",
@@ -23,6 +26,7 @@ if __name__ == "__main__":
                           "pyfof @ git+https://github.com/ajouellette/pyfof"
                           ],
         packages=["gadgetutils"],
+        ext_modules = cythonize("gadgetutils/potential.pyx", language_level=3),
         scripts=["scripts/parse_gadget_out.py"],
         url="https://github.com/ajouellette/critical-shells",
     )
