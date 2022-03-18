@@ -147,17 +147,17 @@ class HaloCatalog(Snapshot):
                     self.offsets_sh = f["Subhalo"]["SubhaloOffsetType"][:,1]
                     self.lengths_sh = f["Subhalo"]["SubhaloLen"][:]
                 except KeyError:
-                    raise ValueError("Cannot load subhalos, snapshot does not contain subhalo information.")
+                    pass
 
-    def get_particles(self, halo_i):
+    def get_particles(self, halo_i, subhalo=False):
         """Return indicies of particles that are part of the given halo."""
-        offset = self.offsets[halo_i]
-        length = self.lengths[halo_i]
+        offset = self.offsets_sh[halo_i] if subhalo else self.offsets[halo_i]
+        length = self.lengths_sh[halo_i] if subhalo else self.offsets[halo_i]
         return np.arange(offset, offset+length)
 
-    def get_particle_ids(self, halo_i, particle_data):
+    def get_particle_ids(self, halo_i, particle_data, subhalo=False):
         """Return ids of particles that are part of the given halo."""
-        particles = self.get_particles(halo_i)
+        particles = self.get_particles(halo_i, subhalo=subhalo)
         return particle_data.ids[offset:offset+length]
 
     def calc_fof_hmf(self, bins):
