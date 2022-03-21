@@ -110,6 +110,7 @@ def main():
         with h5py.File(save_file, 'w') as f:
             f.attrs["Nshells"] = len(all_n_fof)
             f.create_dataset("Nparticles", data=all_n_fof)
+            f.create_dataset("Masses", data=pd.part_mass * all_n_fof)
             f.create_dataset("ParticleIDs", data=all_ids_fof)
 
         print("Done.")
