@@ -57,8 +57,11 @@ def main():
         print(f"Mean particle separation {pd.mean_particle_sep:.2f} Mpc")
         print(f"Using linking parameters {link_params}")
 
-    n_fof = np.zeros((count[rank], len(link_params)), dtype=int)
     radii1 = np.zeros(count[rank])
+    centers1 = np.zeros((count[rank], 3))
+    n_fof = np.zeros((count[rank], len(link_params)), dtype=int)
+    fof_radii = np.zeros((count[rank], len(link_params)))
+    fof_centers = np.zeros((count[rank], len(link_params)))
     #frac_collapse = np.zeros(count[rank], dtype=float)
     #densities = np.zeros(count[rank])
 
@@ -100,7 +103,7 @@ def main():
         for link_i, link_len in enumerate(link_lens):
             groups = pyfof.friends_of_friends(np.double(pos_centered), link_len)
             group_lens = np.array([len(group) for group in groups])
-            #main_group = np.argmax(group_lens)
+
             #print("number of groups {} size of main group {} size at a=100 {}".format(len(groups),
             #    len(groups[main_group]), len(shell_ids)), time.perf_counter() - time_start)
 
@@ -124,14 +127,14 @@ def main():
                     best_i = j
 
             #print(main_group, best_i, group_lens[best_i], best_count / len(shell_ids))
-            main_group = best_i
 
-            n_fof[i,link_i] = len(groups[main_group])
+            n_fof[i,link_i] = group_lens[best_i]
 
         # want percentage of particles within radius at a=1 that will collapse to halo at a=100
         #frac_collapse[i] = len(shell_ids) / len(ind)
 
         radii1[i] = radius1
+        centers1[i] = center1
         #densities[i] = density / crit_density
         #print(density/crit_density, "clipped" if radius1 < np.max(p_radii[mask_ids]) else "")
 
@@ -139,29 +142,40 @@ def main():
 
     if rank == 0:
         print("Finished.")
-        all_n_fof = np.zeros((len(all_radii), len(link_lens)), dtype=int)
         all_radii1 = np.zeros_like(all_radii)
+        all_centers1 = np.zeros_like(all_centers)
+        all_n_fof = np.zeros((len(all_radii), len(link_lens)), dtype=int)
+        all_fof_radii = np.zeros((len(all_radii), len(link_lens)))
         #all_frac_collapse = np.zeros_like(all_radii, dtype=float)
         #all_densities = np.zeros_like(all_radii)
     else:
         all_n_fof = None
         all_radii1 = None
+        all_centers1 = None
         #all_frac_collapse = None
         #all_densities = None
 
     comm.Gatherv(n_fof, [all_n_fof, count*len(link_lens), displ*len(link_lens),
         MPI.LONG], root=0)
     comm.Gatherv(radii1, [all_radii1, count, displ, MPI.DOUBLE], root=0)
+    comm.Gatherv(centers1, [all_centers1, 3*count, 3*displ, MPI.DOUBLE], root=0)
     #comm.Gatherv(frac_collapse, [all_frac_collapse, count, displ, MPI.DOUBLE], root=0)
     #comm.Gatherv(densities, [all_densities, count, displ, MPI.DOUBLE], root=0)
 
     if rank == 0:
-        data = {"n": all_n_fof, "link_params": link_params,
-                "radii1": all_radii1}
-        save_file = data_dir+"-analysis/fof_halos"
+        save_file = data_dir + "-analysis/fof_halos.hdf5"
         print("Writing data to", save_file)
-        with open(save_file, 'wb') as f:
-            pickle.dump(data, f)
+        with h5py.File(save_file, 'w') as f:
+            f.attrs["Nshells"] = len(all_n_fof)
+            f.attrs["NlinkParams"] = len(link_params)
+            f.create_dataset("ShellCenters", data=all_centers1)
+            f.create_dataset("ShellRadii", data=all_radii1)
+            f.create_dataset("LinkParams", data=link_params)
+            f.create_dataset("Nparticles", data=all_n_fof)
+            f.create_dataset("Masses", data=pd.part_mass * all_n_fof)
+            #f.create_dataset("FoFCenters", data=)
+            #f.create_dataset("FoFRadii", data=)
+
         print("Done.")
 
 
