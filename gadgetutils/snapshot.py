@@ -158,7 +158,7 @@ class HaloCatalog(Snapshot):
     def get_particle_ids(self, halo_i, particle_data, subhalo=False):
         """Return ids of particles that are part of the given halo."""
         particles = self.get_particles(halo_i, subhalo=subhalo)
-        return particle_data.ids[offset:offset+length]
+        return particle_data.ids[particles]
 
     def calc_fof_hmf(self, bins):
         """Calculate HMF of FoF clusters."""
