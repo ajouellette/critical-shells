@@ -13,7 +13,7 @@
 set -e
 
 data_dir="$1"
-if [ -d "$data_dir" ]; then
+if [ ! -d "$data_dir" ]; then
     echo Could not find data directory "$data_dir"
     exit 1
 fi
