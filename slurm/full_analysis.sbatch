@@ -5,28 +5,31 @@
 #SBATCH --ntasks-per-node=40
 #SBATCH --job-name=fullanalysis
 #SBATCH --partition=caps
-#SBATCH --output=slurm/logs/%x.out
-#SBATCH --error=slurm/logs/%x.err
+#SBATCH --output=slurm/logs/%x-%j.out
+#SBATCH --error=slurm/logs/%x-%j.err
 ##SBATCH --mail-type=BEGIN,END,FAIL
 ##SBATCH --mail-user=aaronjo2@illinois.edu
 
 set -e
 
-n=512
+data_dir="$1"
+if [ ! -d "$data_dir" ]; then
+    echo Could not find data directory "$data_dir"
+    exit 1
+fi
 
 source ~/.bashrc
 conda activate conda-cosmo
-data=$PROJ/dm-l256-n$n-a100
-snap100=$(python slurm/get_snapnum.py $PROJ/dm-l256-n$n-a100 100)
-snap1=$(python slurm/get_snapnum.py $PROJ/dm-l256-n$n-a100 1)
+snap100=$(python slurm/get_snapnum.py $data_dir 100)
+snap1=$(python slurm/get_snapnum.py $data_dir 1)
 
 date
-srun -d singleton python -u scripts/critical_shell.py $data $snap100 && \
-srun -d singleton python -u scripts/vr_crit_shell.py $data $snap100 && \
-srun -d singleton python -u scripts/crit_shell_fof100.py $data $snap100 && \
-srun -d singleton python -u scripts/crit_shell_fof.py $data $snap1 && \
-srun -d singleton python -u scripts/fof_optim.py $data $snap1
+srun -d singleton python -u scripts/critical_shell.py $data_dir $snap100 && \
+srun -d singleton python -u scripts/vr_crit_shell.py $data_dir $snap100 && \
+srun -d singleton python -u scripts/crit_shell_fof100.py $data_dir $snap100 && \
+srun -d singleton python -u scripts/crit_shell_fof.py $data_dir $snap1 && \
+srun -d singleton python -u scripts/fof_optim.py $data_dir $snap1
 date
 
-mv slurm/logs/"$SLURM_JOB_NAME".out slurm/logs/"$SLURM_JOB_NAME"-"$n".out
-mv slurm/logs/"$SLURM_JOB_NAME".err slurm/logs/"$SLURM_JOB_NAME"-"$n".err
+cd slurm/logs
+../rename_slurm_out.sh "$SLURM_JOB_NAME" "$SLURM_JOB_ID" "$data_dir"
