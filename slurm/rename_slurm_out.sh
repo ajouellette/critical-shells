@@ -25,4 +25,4 @@ if [ -f "$job_name"-"$sim_name".out ]; then
 fi
 
 echo Renaming "$job_name"-"$job_id".* to "$job_name"-"$sim_name".*
-rename --verbose "$job_id" "$sim_name" "$job_name"-"$job_id".*
+rename "$job_id" "$sim_name" "$job_name"-"$job_id".*

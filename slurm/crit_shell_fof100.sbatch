@@ -26,4 +26,5 @@ date
 srun python -u scripts/crit_shell_fof100.py $data_dir $snap100
 date
 
+cd slurm/logs
 ../rename_slurm_out.sh "$SLURM_JOB_NAME" "$SLURM_JOB_ID" "$data_dir"

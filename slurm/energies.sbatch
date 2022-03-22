@@ -25,4 +25,5 @@ date
 srun python -u scripts/energy.py $data_dir subhalos
 date
 
+cd slurm/logs
 ../rename_slurm_out.sh "$SLURM_JOB_NAME" "$SLURM_JOB_ID" "$data_dir"

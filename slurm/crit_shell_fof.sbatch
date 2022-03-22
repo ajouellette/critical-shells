@@ -27,4 +27,5 @@ srun python -u scripts/crit_shell_fof.py $data_dir $snap1
 date
 
 # rename outputs to something recongnizable
+cd slurm/logs
 ../rename_slurm_out.sh "$SLURM_JOB_NAME" "$SLURM_JOB_ID" "$data_dir"
