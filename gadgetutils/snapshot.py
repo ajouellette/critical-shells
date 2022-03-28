@@ -117,7 +117,7 @@ class ParticleData(Snapshot):
         """Return indicies of particles given list of ids."""
         if self.ids is None:
             raise RuntimeError("Cannot select particles, snapshot loaded with load_ids=False.")
-        return np.nonzero(np.isin(self.ids, ids))
+        return np.nonzero(np.isin(self.ids, ids))[0]
 
 
 class HaloCatalog(Snapshot):
