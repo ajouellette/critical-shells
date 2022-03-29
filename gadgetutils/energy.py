@@ -4,7 +4,7 @@ from .potential import sum_inv_pairdists
 
 def calc_kinetic(vel):
     """Calculate kinetic energy per unit mass given particle velocities."""
-    return 0.5 * np.sum(vel * vel)
+    return 0.5 * np.sum(vel * vel, dtype=float)
 
 
 def calc_potential(pos, mass, G):
