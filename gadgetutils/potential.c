@@ -2988,7 +2988,7 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_2sum_inv_pairdists(CYTHON_UNU
  *             for k in range(dims):
  *                 temp = pos[i,k] - pos[j,k]             # <<<<<<<<<<<<<<
  *                 dist2 += temp * temp
- *             potential -= 1/c_sqrt(dist2)
+ *             potential -= 1/sqrt(dist2 + 1e-14)
  */
         __pyx_t_10 = __pyx_v_i;
         __pyx_t_11 = __pyx_v_k;
@@ -3000,7 +3000,7 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_2sum_inv_pairdists(CYTHON_UNU
  *             for k in range(dims):
  *                 temp = pos[i,k] - pos[j,k]
  *                 dist2 += temp * temp             # <<<<<<<<<<<<<<
- *             potential -= 1/c_sqrt(dist2)
+ *             potential -= 1/sqrt(dist2 + 1e-14)
  * 
  */
         __pyx_v_dist2 = (__pyx_v_dist2 + (__pyx_v_temp * __pyx_v_temp));
@@ -3009,16 +3009,16 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_2sum_inv_pairdists(CYTHON_UNU
       /* "gadgetutils/potential.pyx":31
  *                 temp = pos[i,k] - pos[j,k]
  *                 dist2 += temp * temp
- *             potential -= 1/c_sqrt(dist2)             # <<<<<<<<<<<<<<
+ *             potential -= 1/sqrt(dist2 + 1e-14)             # <<<<<<<<<<<<<<
  * 
  *     return potential
  */
-      __pyx_v_potential = (__pyx_v_potential - (1.0 / sqrt(__pyx_v_dist2)));
+      __pyx_v_potential = (__pyx_v_potential - (1.0 / sqrt((__pyx_v_dist2 + 1e-14))));
     }
   }
 
   /* "gadgetutils/potential.pyx":33
- *             potential -= 1/c_sqrt(dist2)
+ *             potential -= 1/sqrt(dist2 + 1e-14)
  * 
  *     return potential             # <<<<<<<<<<<<<<
  */
@@ -3183,7 +3183,7 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_4sum_inv_pairdists(CYTHON_UNU
  *             for k in range(dims):
  *                 temp = pos[i,k] - pos[j,k]             # <<<<<<<<<<<<<<
  *                 dist2 += temp * temp
- *             potential -= 1/c_sqrt(dist2)
+ *             potential -= 1/sqrt(dist2 + 1e-14)
  */
         __pyx_t_10 = __pyx_v_i;
         __pyx_t_11 = __pyx_v_k;
@@ -3195,7 +3195,7 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_4sum_inv_pairdists(CYTHON_UNU
  *             for k in range(dims):
  *                 temp = pos[i,k] - pos[j,k]
  *                 dist2 += temp * temp             # <<<<<<<<<<<<<<
- *             potential -= 1/c_sqrt(dist2)
+ *             potential -= 1/sqrt(dist2 + 1e-14)
  * 
  */
         __pyx_v_dist2 = (__pyx_v_dist2 + (__pyx_v_temp * __pyx_v_temp));
@@ -3204,16 +3204,16 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_4sum_inv_pairdists(CYTHON_UNU
       /* "gadgetutils/potential.pyx":31
  *                 temp = pos[i,k] - pos[j,k]
  *                 dist2 += temp * temp
- *             potential -= 1/c_sqrt(dist2)             # <<<<<<<<<<<<<<
+ *             potential -= 1/sqrt(dist2 + 1e-14)             # <<<<<<<<<<<<<<
  * 
  *     return potential
  */
-      __pyx_v_potential = (__pyx_v_potential - (1.0 / sqrt(__pyx_v_dist2)));
+      __pyx_v_potential = (__pyx_v_potential - (1.0 / sqrt((__pyx_v_dist2 + 1e-14))));
     }
   }
 
   /* "gadgetutils/potential.pyx":33
- *             potential -= 1/c_sqrt(dist2)
+ *             potential -= 1/sqrt(dist2 + 1e-14)
  * 
  *     return potential             # <<<<<<<<<<<<<<
  */
@@ -17828,7 +17828,7 @@ if (!__Pyx_RefNanny) {
 
   /* "gadgetutils/potential.pyx":1
  * cimport cython             # <<<<<<<<<<<<<<
- * from libc.math cimport sqrt as c_sqrt
+ * from libc.math cimport sqrt
  * 
  */
   __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1, __pyx_L1_error)

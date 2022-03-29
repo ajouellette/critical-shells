@@ -1,5 +1,5 @@
 cimport cython
-from libc.math cimport sqrt as c_sqrt
+from libc.math cimport sqrt
 
 
 ctypedef fused my_float:
@@ -28,6 +28,6 @@ def sum_inv_pairdists(my_float [:,::1] pos):
             for k in range(dims):
                 temp = pos[i,k] - pos[j,k]
                 dist2 += temp * temp
-            potential -= 1/c_sqrt(dist2)
+            potential -= 1/sqrt(dist2 + 1e-14)
 
     return potential

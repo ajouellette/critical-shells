@@ -1,0 +1,13 @@
+
+    def cluster_center(self, cluster_indicies, percentile=80, max_iters=10):
+        """Calculate cluster center iteratively."""
+        inds = np.copy(cluster_indicies)
+        center = utils.mean_pos_pbc(self.pos[cluster_indicies], self.box_size)
+
+        for i in range(max_iters):
+            pos_centered = utils.center_box_pbc(self.pos[inds], center, self.box_size)
+            radii2 = np.sum(pos_centered**2, axis=1)
+            rad2_cut = np.percentile(radii2, percentile)
+            inds = inds[radii2 < rad2_cut]
+            center
+        return center
