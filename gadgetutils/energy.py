@@ -7,7 +7,7 @@ def calc_kinetic(vel):
     return 0.5 * np.sum(vel * vel, dtype=float)
 
 
-def calc_potential(pos, mass, G):
+def calc_potential(pos, mass, G, epsilon=1e-2):
     """Calculate gravitational potential energy per unit mass given
     particle positions."""
-    return G * mass * sum_inv_pairdists(pos)
+    return G * mass * sum_inv_pairdists(pos, epsilon=epsilon)
