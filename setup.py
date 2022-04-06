@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import Extension, setup
 from Cython.Build import cythonize
 
 
@@ -6,6 +6,12 @@ PACKAGENAME = "critical-shells"
 VERSION = "0.1.0"
 
 if __name__ == "__main__":
+    ext_modules = [
+        Extension("potential", ["gadgetutils/potential.pyx"],
+            extra_compile_args=['-O3', '-march=native', '-ffast-math', '-fopenmp'],
+            extra_link_args=['-fopenmp'])
+    ]
+
     setup(
         name=PACKAGENAME,
         version=VERSION,
@@ -26,7 +32,7 @@ if __name__ == "__main__":
                           "pyfof @ git+https://github.com/ajouellette/pyfof"
                           ],
         packages=["gadgetutils"],
-        ext_modules = cythonize("gadgetutils/potential.pyx", language_level=3),
+        ext_modules = cythonize(ext_modules),
         scripts=["scripts/parse_gadget_out.py"],
         url="https://github.com/ajouellette/critical-shells",
     )
