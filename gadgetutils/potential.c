@@ -4,12 +4,21 @@
 {
     "distutils": {
         "depends": [],
-        "name": "gadgetutils.potential",
+        "extra_compile_args": [
+            "-O3",
+            "-march=native",
+            "-ffast-math",
+            "-fopenmp"
+        ],
+        "extra_link_args": [
+            "-fopenmp"
+        ],
+        "name": "potential",
         "sources": [
             "gadgetutils/potential.pyx"
         ]
     },
-    "module_name": "gadgetutils.potential"
+    "module_name": "potential"
 }
 END: Cython Metadata */
 
@@ -24,7 +33,7 @@ END: Cython Metadata */
 #else
 #define CYTHON_ABI "0_29_28"
 #define CYTHON_HEX_VERSION 0x001D1CF0
-#define CYTHON_FUTURE_DIVISION 1
+#define CYTHON_FUTURE_DIVISION 0
 #include <stddef.h>
 #ifndef offsetof
   #define offsetof(type, member) ( (size_t) & ((type*)0) -> member )
@@ -692,8 +701,8 @@ static CYTHON_INLINE float __PYX_NAN() {
   #endif
 #endif
 
-#define __PYX_HAVE__gadgetutils__potential
-#define __PYX_HAVE_API__gadgetutils__potential
+#define __PYX_HAVE__potential
+#define __PYX_HAVE_API__potential
 /* Early includes */
 #include <math.h>
 #include "pythread.h"
@@ -913,6 +922,13 @@ static const char *__pyx_f[] = {
   "gadgetutils/potential.pyx",
   "stringsource",
 };
+/* NoFastGil.proto */
+#define __Pyx_PyGILState_Ensure PyGILState_Ensure
+#define __Pyx_PyGILState_Release PyGILState_Release
+#define __Pyx_FastGIL_Remember()
+#define __Pyx_FastGIL_Forget()
+#define __Pyx_FastGilFuncInit()
+
 /* MemviewSliceStruct.proto */
 struct __pyx_memoryview_obj;
 typedef struct {
@@ -977,13 +993,6 @@ typedef volatile __pyx_atomic_int_type __pyx_atomic_int;
 #ifndef __PYX_FORCE_INIT_THREADS
   #define __PYX_FORCE_INIT_THREADS 0
 #endif
-
-/* NoFastGil.proto */
-#define __Pyx_PyGILState_Ensure PyGILState_Ensure
-#define __Pyx_PyGILState_Release PyGILState_Release
-#define __Pyx_FastGIL_Remember()
-#define __Pyx_FastGIL_Forget()
-#define __Pyx_FastGilFuncInit()
 
 /* BufferFormatStructs.proto */
 #define IS_UNSIGNED(type) (((type) -1) > 0)
@@ -1963,7 +1972,7 @@ static PyObject *__pyx_memoryviewslice_assign_item_from_object(struct __pyx_memo
 
 /* Module declarations from 'libc.math' */
 
-/* Module declarations from 'gadgetutils.potential' */
+/* Module declarations from 'potential' */
 static PyTypeObject *__pyx_array_type = 0;
 static PyTypeObject *__pyx_MemviewEnum_type = 0;
 static PyTypeObject *__pyx_memoryview_type = 0;
@@ -2010,11 +2019,11 @@ static void __pyx_memoryview__slice_assign_scalar(char *, Py_ssize_t *, Py_ssize
 static PyObject *__pyx_unpickle_Enum__set_state(struct __pyx_MemviewEnum_obj *, PyObject *); /*proto*/
 static __Pyx_TypeInfo __Pyx_TypeInfo_float = { "float", NULL, sizeof(float), { 0 }, 0, 'R', 0, 0 };
 static __Pyx_TypeInfo __Pyx_TypeInfo_double = { "double", NULL, sizeof(double), { 0 }, 0, 'R', 0, 0 };
-#define __Pyx_MODULE_NAME "gadgetutils.potential"
-extern int __pyx_module_is_main_gadgetutils__potential;
-int __pyx_module_is_main_gadgetutils__potential = 0;
+#define __Pyx_MODULE_NAME "potential"
+extern int __pyx_module_is_main_potential;
+int __pyx_module_is_main_potential = 0;
 
-/* Implementation of 'gadgetutils.potential' */
+/* Implementation of 'potential' */
 static PyObject *__pyx_builtin_TypeError;
 static PyObject *__pyx_builtin_range;
 static PyObject *__pyx_builtin_ValueError;
@@ -2116,7 +2125,6 @@ static const char __pyx_k_cline_in_traceback[] = "cline_in_traceback";
 static const char __pyx_k_strided_and_direct[] = "<strided and direct>";
 static const char __pyx_k_strided_and_indirect[] = "<strided and indirect>";
 static const char __pyx_k_contiguous_and_direct[] = "<contiguous and direct>";
-static const char __pyx_k_gadgetutils_potential[] = "gadgetutils.potential";
 static const char __pyx_k_MemoryView_of_r_object[] = "<MemoryView of %r object>";
 static const char __pyx_k_MemoryView_of_r_at_0x_x[] = "<MemoryView of %r at 0x%x>";
 static const char __pyx_k_contiguous_and_indirect[] = "<contiguous and indirect>";
@@ -2198,7 +2206,6 @@ static PyObject *__pyx_n_s_float;
 static PyObject *__pyx_n_s_format;
 static PyObject *__pyx_n_s_fortran;
 static PyObject *__pyx_n_u_fortran;
-static PyObject *__pyx_n_s_gadgetutils_potential;
 static PyObject *__pyx_kp_s_gadgetutils_potential_pyx;
 static PyObject *__pyx_n_s_getstate;
 static PyObject *__pyx_kp_s_got_differing_extents_in_dimensi;
@@ -2263,11 +2270,11 @@ static PyObject *__pyx_kp_s_unable_to_allocate_array_data;
 static PyObject *__pyx_kp_s_unable_to_allocate_shape_and_str;
 static PyObject *__pyx_n_s_unpack;
 static PyObject *__pyx_n_s_update;
-static PyObject *__pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_signatures, PyObject *__pyx_v_args, PyObject *__pyx_v_kwargs, CYTHON_UNUSED PyObject *__pyx_v_defaults); /* proto */
-static PyObject *__pyx_pf_11gadgetutils_9potential_12__defaults__(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
-static PyObject *__pyx_pf_11gadgetutils_9potential_2sum_inv_pairdists(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_pos, PyObject *__pyx_v_epsilon); /* proto */
-static PyObject *__pyx_pf_11gadgetutils_9potential_14__defaults__(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
-static PyObject *__pyx_pf_11gadgetutils_9potential_4sum_inv_pairdists(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_pos, PyObject *__pyx_v_epsilon); /* proto */
+static PyObject *__pyx_pf_9potential_sum_inv_pairdists(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_signatures, PyObject *__pyx_v_args, PyObject *__pyx_v_kwargs, CYTHON_UNUSED PyObject *__pyx_v_defaults); /* proto */
+static PyObject *__pyx_pf_9potential_12__defaults__(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
+static PyObject *__pyx_pf_9potential_2sum_inv_pairdists(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_pos, PyObject *__pyx_v_epsilon); /* proto */
+static PyObject *__pyx_pf_9potential_14__defaults__(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
+static PyObject *__pyx_pf_9potential_4sum_inv_pairdists(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_pos, PyObject *__pyx_v_epsilon); /* proto */
 static int __pyx_array___pyx_pf_15View_dot_MemoryView_5array___cinit__(struct __pyx_array_obj *__pyx_v_self, PyObject *__pyx_v_shape, Py_ssize_t __pyx_v_itemsize, PyObject *__pyx_v_format, PyObject *__pyx_v_mode, int __pyx_v_allocate_buffer); /* proto */
 static int __pyx_array___pyx_pf_15View_dot_MemoryView_5array_2__getbuffer__(struct __pyx_array_obj *__pyx_v_self, Py_buffer *__pyx_v_info, int __pyx_v_flags); /* proto */
 static void __pyx_array___pyx_pf_15View_dot_MemoryView_5array_4__dealloc__(struct __pyx_array_obj *__pyx_v_self); /* proto */
@@ -2351,19 +2358,19 @@ static PyObject *__pyx_codeobj__26;
 static PyObject *__pyx_codeobj__33;
 /* Late includes */
 
-/* "gadgetutils/potential.pyx":14
- * @cython.nonecheck(False)
+/* "potential.pyx":16
  * @cython.cdivision(True)
+ * @cython.initializedcheck(False)
  * def sum_inv_pairdists(my_float [:,::1] pos, epsilon=1e-2):             # <<<<<<<<<<<<<<
  *     """Calculate the sum of inverse pair distances for a collection of particles.
  *     Can be used to calculate potentials / potential energies.
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_11gadgetutils_9potential_1sum_inv_pairdists(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_11gadgetutils_9potential_sum_inv_pairdists[] = "Calculate the sum of inverse pair distances for a collection of particles.\n    Can be used to calculate potentials / potential energies.\n    ";
-static PyMethodDef __pyx_mdef_11gadgetutils_9potential_1sum_inv_pairdists = {"sum_inv_pairdists", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_11gadgetutils_9potential_1sum_inv_pairdists, METH_VARARGS|METH_KEYWORDS, __pyx_doc_11gadgetutils_9potential_sum_inv_pairdists};
-static PyObject *__pyx_pw_11gadgetutils_9potential_1sum_inv_pairdists(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_9potential_1sum_inv_pairdists(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static char __pyx_doc_9potential_sum_inv_pairdists[] = "Calculate the sum of inverse pair distances for a collection of particles.\n    Can be used to calculate potentials / potential energies.\n    ";
+static PyMethodDef __pyx_mdef_9potential_1sum_inv_pairdists = {"sum_inv_pairdists", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_9potential_1sum_inv_pairdists, METH_VARARGS|METH_KEYWORDS, __pyx_doc_9potential_sum_inv_pairdists};
+static PyObject *__pyx_pw_9potential_1sum_inv_pairdists(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_signatures = 0;
   PyObject *__pyx_v_args = 0;
   PyObject *__pyx_v_kwargs = 0;
@@ -2408,17 +2415,17 @@ static PyObject *__pyx_pw_11gadgetutils_9potential_1sum_inv_pairdists(PyObject *
         case  2:
         if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_kwargs)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__pyx_fused_cpdef", 1, 4, 4, 2); __PYX_ERR(0, 14, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__pyx_fused_cpdef", 1, 4, 4, 2); __PYX_ERR(0, 16, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_defaults)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__pyx_fused_cpdef", 1, 4, 4, 3); __PYX_ERR(0, 14, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__pyx_fused_cpdef", 1, 4, 4, 3); __PYX_ERR(0, 16, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__pyx_fused_cpdef") < 0)) __PYX_ERR(0, 14, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__pyx_fused_cpdef") < 0)) __PYX_ERR(0, 16, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 4) {
       goto __pyx_L5_argtuple_error;
@@ -2435,20 +2442,20 @@ static PyObject *__pyx_pw_11gadgetutils_9potential_1sum_inv_pairdists(PyObject *
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__pyx_fused_cpdef", 1, 4, 4, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 14, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__pyx_fused_cpdef", 1, 4, 4, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 16, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("gadgetutils.potential.__pyx_fused_cpdef", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("potential.__pyx_fused_cpdef", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(__pyx_self, __pyx_v_signatures, __pyx_v_args, __pyx_v_kwargs, __pyx_v_defaults);
+  __pyx_r = __pyx_pf_9potential_sum_inv_pairdists(__pyx_self, __pyx_v_signatures, __pyx_v_args, __pyx_v_kwargs, __pyx_v_defaults);
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_signatures, PyObject *__pyx_v_args, PyObject *__pyx_v_kwargs, CYTHON_UNUSED PyObject *__pyx_v_defaults) {
+static PyObject *__pyx_pf_9potential_sum_inv_pairdists(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_signatures, PyObject *__pyx_v_args, PyObject *__pyx_v_kwargs, CYTHON_UNUSED PyObject *__pyx_v_defaults) {
   PyObject *__pyx_v_dest_sig = NULL;
   Py_ssize_t __pyx_v_i;
   PyTypeObject *__pyx_v_ndarray = 0;
@@ -2489,7 +2496,7 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(CYTHON_UNUS
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("sum_inv_pairdists", 0);
   __Pyx_INCREF(__pyx_v_kwargs);
-  __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(Py_None);
   __Pyx_GIVEREF(Py_None);
@@ -2503,7 +2510,7 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(CYTHON_UNUS
     __pyx_t_2 = __pyx_t_4;
     goto __pyx_L4_bool_binop_done;
   }
-  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_v_kwargs); if (unlikely(__pyx_t_4 < 0)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_v_kwargs); if (unlikely(__pyx_t_4 < 0)) __PYX_ERR(0, 16, __pyx_L1_error)
   __pyx_t_3 = ((!__pyx_t_4) != 0);
   __pyx_t_2 = __pyx_t_3;
   __pyx_L4_bool_binop_done:;
@@ -2511,21 +2518,21 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(CYTHON_UNUS
     __Pyx_INCREF(Py_None);
     __Pyx_DECREF_SET(__pyx_v_kwargs, Py_None);
   }
-  __pyx_t_1 = ((PyObject *)__Pyx_ImportNumPyArrayTypeIfAvailable()); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_1 = ((PyObject *)__Pyx_ImportNumPyArrayTypeIfAvailable()); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_ndarray = ((PyTypeObject*)__pyx_t_1);
   __pyx_t_1 = 0;
   __pyx_v_itemsize = -1L;
   if (unlikely(__pyx_v_args == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-    __PYX_ERR(0, 14, __pyx_L1_error)
+    __PYX_ERR(0, 16, __pyx_L1_error)
   }
-  __pyx_t_5 = PyTuple_GET_SIZE(((PyObject*)__pyx_v_args)); if (unlikely(__pyx_t_5 == ((Py_ssize_t)-1))) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_5 = PyTuple_GET_SIZE(((PyObject*)__pyx_v_args)); if (unlikely(__pyx_t_5 == ((Py_ssize_t)-1))) __PYX_ERR(0, 16, __pyx_L1_error)
   __pyx_t_2 = ((0 < __pyx_t_5) != 0);
   if (__pyx_t_2) {
     if (unlikely(__pyx_v_args == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 14, __pyx_L1_error)
+      __PYX_ERR(0, 16, __pyx_L1_error)
     }
     __pyx_t_1 = PyTuple_GET_ITEM(((PyObject*)__pyx_v_args), 0);
     __Pyx_INCREF(__pyx_t_1);
@@ -2542,18 +2549,18 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(CYTHON_UNUS
   }
   if (unlikely(__pyx_v_kwargs == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 14, __pyx_L1_error)
+    __PYX_ERR(0, 16, __pyx_L1_error)
   }
-  __pyx_t_4 = (__Pyx_PyDict_ContainsTF(__pyx_n_s_pos, ((PyObject*)__pyx_v_kwargs), Py_EQ)); if (unlikely(__pyx_t_4 < 0)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_4 = (__Pyx_PyDict_ContainsTF(__pyx_n_s_pos, ((PyObject*)__pyx_v_kwargs), Py_EQ)); if (unlikely(__pyx_t_4 < 0)) __PYX_ERR(0, 16, __pyx_L1_error)
   __pyx_t_3 = (__pyx_t_4 != 0);
   __pyx_t_2 = __pyx_t_3;
   __pyx_L7_bool_binop_done:;
   if (__pyx_t_2) {
     if (unlikely(__pyx_v_kwargs == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 14, __pyx_L1_error)
+      __PYX_ERR(0, 16, __pyx_L1_error)
     }
-    __pyx_t_1 = __Pyx_PyDict_GetItem(((PyObject*)__pyx_v_kwargs), __pyx_n_s_pos); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 14, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyDict_GetItem(((PyObject*)__pyx_v_kwargs), __pyx_n_s_pos); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 16, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_v_arg = __pyx_t_1;
     __pyx_t_1 = 0;
@@ -2562,12 +2569,12 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(CYTHON_UNUS
   /*else*/ {
     if (unlikely(__pyx_v_args == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-      __PYX_ERR(0, 14, __pyx_L1_error)
+      __PYX_ERR(0, 16, __pyx_L1_error)
     }
-    __pyx_t_5 = PyTuple_GET_SIZE(((PyObject*)__pyx_v_args)); if (unlikely(__pyx_t_5 == ((Py_ssize_t)-1))) __PYX_ERR(0, 14, __pyx_L1_error)
-    __pyx_t_1 = PyInt_FromSsize_t(__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 14, __pyx_L1_error)
+    __pyx_t_5 = PyTuple_GET_SIZE(((PyObject*)__pyx_v_args)); if (unlikely(__pyx_t_5 == ((Py_ssize_t)-1))) __PYX_ERR(0, 16, __pyx_L1_error)
+    __pyx_t_1 = PyInt_FromSsize_t(__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 16, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_6 = PyTuple_New(3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 14, __pyx_L1_error)
+    __pyx_t_6 = PyTuple_New(3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 16, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_INCREF(__pyx_int_1);
     __Pyx_GIVEREF(__pyx_int_1);
@@ -2578,15 +2585,15 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(CYTHON_UNUS
     __Pyx_GIVEREF(__pyx_t_1);
     PyTuple_SET_ITEM(__pyx_t_6, 2, __pyx_t_1);
     __pyx_t_1 = 0;
-    __pyx_t_1 = __Pyx_PyString_Format(__pyx_kp_s_Expected_at_least_d_argument_s_g, __pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 14, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyString_Format(__pyx_kp_s_Expected_at_least_d_argument_s_g, __pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 16, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_builtin_TypeError, __pyx_t_1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 14, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_builtin_TypeError, __pyx_t_1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 16, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_Raise(__pyx_t_6, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __PYX_ERR(0, 14, __pyx_L1_error)
+    __PYX_ERR(0, 16, __pyx_L1_error)
   }
   __pyx_L6:;
   while (1) {
@@ -2596,7 +2603,7 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(CYTHON_UNUS
       __pyx_t_3 = __Pyx_TypeCheck(__pyx_v_arg, __pyx_v_ndarray); 
       __pyx_t_2 = (__pyx_t_3 != 0);
       if (__pyx_t_2) {
-        __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_dtype); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 14, __pyx_L1_error)
+        __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_dtype); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 16, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         __pyx_v_dtype = __pyx_t_6;
         __pyx_t_6 = 0;
@@ -2605,14 +2612,14 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(CYTHON_UNUS
       __pyx_t_2 = __pyx_memoryview_check(__pyx_v_arg); 
       __pyx_t_3 = (__pyx_t_2 != 0);
       if (__pyx_t_3) {
-        __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_base); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 14, __pyx_L1_error)
+        __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_base); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 16, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         __pyx_v_arg_base = __pyx_t_6;
         __pyx_t_6 = 0;
         __pyx_t_3 = __Pyx_TypeCheck(__pyx_v_arg_base, __pyx_v_ndarray); 
         __pyx_t_2 = (__pyx_t_3 != 0);
         if (__pyx_t_2) {
-          __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg_base, __pyx_n_s_dtype); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 14, __pyx_L1_error)
+          __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg_base, __pyx_n_s_dtype); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 16, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_6);
           __pyx_v_dtype = __pyx_t_6;
           __pyx_t_6 = 0;
@@ -2634,14 +2641,14 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(CYTHON_UNUS
       __pyx_t_2 = (__pyx_v_dtype != Py_None);
       __pyx_t_3 = (__pyx_t_2 != 0);
       if (__pyx_t_3) {
-        __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_dtype, __pyx_n_s_itemsize); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 14, __pyx_L1_error)
+        __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_dtype, __pyx_n_s_itemsize); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 16, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
-        __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_6); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 14, __pyx_L1_error)
+        __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_6); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 16, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
         __pyx_v_itemsize = __pyx_t_5;
-        __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_dtype, __pyx_n_s_kind); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 14, __pyx_L1_error)
+        __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_dtype, __pyx_n_s_kind); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 16, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
-        __pyx_t_7 = __Pyx_PyObject_Ord(__pyx_t_6); if (unlikely(__pyx_t_7 == ((long)(long)(Py_UCS4)-1))) __PYX_ERR(0, 14, __pyx_L1_error)
+        __pyx_t_7 = __Pyx_PyObject_Ord(__pyx_t_6); if (unlikely(__pyx_t_7 == ((long)(long)(Py_UCS4)-1))) __PYX_ERR(0, 16, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
         __pyx_v_kind = __pyx_t_7;
         __pyx_v_dtype_signed = (__pyx_v_kind == 'i');
@@ -2656,15 +2663,15 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(CYTHON_UNUS
             __pyx_t_3 = __pyx_t_2;
             goto __pyx_L16_bool_binop_done;
           }
-          __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 14, __pyx_L1_error)
+          __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 16, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_6);
-          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_6); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 14, __pyx_L1_error)
+          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_6); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 16, __pyx_L1_error)
           __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
           __pyx_t_2 = ((((Py_ssize_t)__pyx_t_5) == 2) != 0);
           __pyx_t_3 = __pyx_t_2;
           __pyx_L16_bool_binop_done:;
           if (__pyx_t_3) {
-            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_float, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 14, __pyx_L1_error)
+            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_float, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 16, __pyx_L1_error)
             goto __pyx_L10_break;
           }
           __pyx_t_2 = (((sizeof(double)) == __pyx_v_itemsize) != 0);
@@ -2673,15 +2680,15 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(CYTHON_UNUS
             __pyx_t_3 = __pyx_t_2;
             goto __pyx_L19_bool_binop_done;
           }
-          __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 14, __pyx_L1_error)
+          __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 16, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_6);
-          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_6); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 14, __pyx_L1_error)
+          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_6); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 16, __pyx_L1_error)
           __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
           __pyx_t_2 = ((((Py_ssize_t)__pyx_t_5) == 2) != 0);
           __pyx_t_3 = __pyx_t_2;
           __pyx_L19_bool_binop_done:;
           if (__pyx_t_3) {
-            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_double, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 14, __pyx_L1_error)
+            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_double, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 16, __pyx_L1_error)
             goto __pyx_L10_break;
           }
           break;
@@ -2708,7 +2715,7 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(CYTHON_UNUS
       __pyx_t_3 = (__pyx_v_memslice.memview != 0);
       if (__pyx_t_3) {
         __PYX_XDEC_MEMVIEW((&__pyx_v_memslice), 1); 
-        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_float, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 14, __pyx_L1_error)
+        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_float, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 16, __pyx_L1_error)
         goto __pyx_L10_break;
       }
       /*else*/ {
@@ -2730,27 +2737,27 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(CYTHON_UNUS
       __pyx_t_3 = (__pyx_v_memslice.memview != 0);
       if (__pyx_t_3) {
         __PYX_XDEC_MEMVIEW((&__pyx_v_memslice), 1); 
-        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_double, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 14, __pyx_L1_error)
+        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_double, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 16, __pyx_L1_error)
         goto __pyx_L10_break;
       }
       /*else*/ {
         PyErr_Clear(); 
       }
     }
-    if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, Py_None, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 14, __pyx_L1_error)
+    if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, Py_None, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 16, __pyx_L1_error)
     goto __pyx_L10_break;
   }
   __pyx_L10_break:;
-  __pyx_t_6 = PyList_New(0); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_6 = PyList_New(0); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __pyx_v_candidates = ((PyObject*)__pyx_t_6);
   __pyx_t_6 = 0;
   __pyx_t_5 = 0;
   if (unlikely(__pyx_v_signatures == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 14, __pyx_L1_error)
+    __PYX_ERR(0, 16, __pyx_L1_error)
   }
-  __pyx_t_1 = __Pyx_dict_iterator(((PyObject*)__pyx_v_signatures), 1, ((PyObject *)NULL), (&__pyx_t_9), (&__pyx_t_10)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_dict_iterator(((PyObject*)__pyx_v_signatures), 1, ((PyObject *)NULL), (&__pyx_t_9), (&__pyx_t_10)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_6);
   __pyx_t_6 = __pyx_t_1;
@@ -2758,12 +2765,12 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(CYTHON_UNUS
   while (1) {
     __pyx_t_11 = __Pyx_dict_iter_next(__pyx_t_6, __pyx_t_9, &__pyx_t_5, &__pyx_t_1, NULL, NULL, __pyx_t_10);
     if (unlikely(__pyx_t_11 == 0)) break;
-    if (unlikely(__pyx_t_11 == -1)) __PYX_ERR(0, 14, __pyx_L1_error)
+    if (unlikely(__pyx_t_11 == -1)) __PYX_ERR(0, 16, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_XDECREF_SET(__pyx_v_sig, __pyx_t_1);
     __pyx_t_1 = 0;
     __pyx_v_match_found = 0;
-    __pyx_t_13 = __Pyx_PyObject_GetAttrStr(__pyx_v_sig, __pyx_n_s_strip); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 14, __pyx_L1_error)
+    __pyx_t_13 = __Pyx_PyObject_GetAttrStr(__pyx_v_sig, __pyx_n_s_strip); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 16, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_13);
     __pyx_t_14 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_13))) {
@@ -2777,10 +2784,10 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(CYTHON_UNUS
     }
     __pyx_t_12 = (__pyx_t_14) ? __Pyx_PyObject_Call2Args(__pyx_t_13, __pyx_t_14, __pyx_kp_s__3) : __Pyx_PyObject_CallOneArg(__pyx_t_13, __pyx_kp_s__3);
     __Pyx_XDECREF(__pyx_t_14); __pyx_t_14 = 0;
-    if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 14, __pyx_L1_error)
+    if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 16, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_12);
     __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
-    __pyx_t_13 = __Pyx_PyObject_GetAttrStr(__pyx_t_12, __pyx_n_s_split); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 14, __pyx_L1_error)
+    __pyx_t_13 = __Pyx_PyObject_GetAttrStr(__pyx_t_12, __pyx_n_s_split); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 16, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_13);
     __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
     __pyx_t_12 = NULL;
@@ -2795,12 +2802,12 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(CYTHON_UNUS
     }
     __pyx_t_1 = (__pyx_t_12) ? __Pyx_PyObject_Call2Args(__pyx_t_13, __pyx_t_12, __pyx_kp_s__4) : __Pyx_PyObject_CallOneArg(__pyx_t_13, __pyx_kp_s__4);
     __Pyx_XDECREF(__pyx_t_12); __pyx_t_12 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 14, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 16, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
     __Pyx_XDECREF_SET(__pyx_v_src_sig, __pyx_t_1);
     __pyx_t_1 = 0;
-    __pyx_t_15 = PyList_GET_SIZE(__pyx_v_dest_sig); if (unlikely(__pyx_t_15 == ((Py_ssize_t)-1))) __PYX_ERR(0, 14, __pyx_L1_error)
+    __pyx_t_15 = PyList_GET_SIZE(__pyx_v_dest_sig); if (unlikely(__pyx_t_15 == ((Py_ssize_t)-1))) __PYX_ERR(0, 16, __pyx_L1_error)
     __pyx_t_16 = __pyx_t_15;
     for (__pyx_t_17 = 0; __pyx_t_17 < __pyx_t_16; __pyx_t_17+=1) {
       __pyx_v_i = __pyx_t_17;
@@ -2811,11 +2818,11 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(CYTHON_UNUS
       __pyx_t_3 = (__pyx_v_dst_type != Py_None);
       __pyx_t_2 = (__pyx_t_3 != 0);
       if (__pyx_t_2) {
-        __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_src_sig, __pyx_v_i, Py_ssize_t, 1, PyInt_FromSsize_t, 0, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 14, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_src_sig, __pyx_v_i, Py_ssize_t, 1, PyInt_FromSsize_t, 0, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 16, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
-        __pyx_t_13 = PyObject_RichCompare(__pyx_t_1, __pyx_v_dst_type, Py_EQ); __Pyx_XGOTREF(__pyx_t_13); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 14, __pyx_L1_error)
+        __pyx_t_13 = PyObject_RichCompare(__pyx_t_1, __pyx_v_dst_type, Py_EQ); __Pyx_XGOTREF(__pyx_t_13); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 16, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-        __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_13); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 14, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_13); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 16, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
         if (__pyx_t_2) {
           __pyx_v_match_found = 1;
@@ -2831,35 +2838,35 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(CYTHON_UNUS
     __pyx_L32_break:;
     __pyx_t_2 = (__pyx_v_match_found != 0);
     if (__pyx_t_2) {
-      __pyx_t_18 = __Pyx_PyList_Append(__pyx_v_candidates, __pyx_v_sig); if (unlikely(__pyx_t_18 == ((int)-1))) __PYX_ERR(0, 14, __pyx_L1_error)
+      __pyx_t_18 = __Pyx_PyList_Append(__pyx_v_candidates, __pyx_v_sig); if (unlikely(__pyx_t_18 == ((int)-1))) __PYX_ERR(0, 16, __pyx_L1_error)
     }
   }
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   __pyx_t_2 = (PyList_GET_SIZE(__pyx_v_candidates) != 0);
   __pyx_t_3 = ((!__pyx_t_2) != 0);
   if (__pyx_t_3) {
-    __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_TypeError, __pyx_tuple__5, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 14, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_TypeError, __pyx_tuple__5, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 16, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_Raise(__pyx_t_6, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __PYX_ERR(0, 14, __pyx_L1_error)
+    __PYX_ERR(0, 16, __pyx_L1_error)
   }
-  __pyx_t_9 = PyList_GET_SIZE(__pyx_v_candidates); if (unlikely(__pyx_t_9 == ((Py_ssize_t)-1))) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_9 = PyList_GET_SIZE(__pyx_v_candidates); if (unlikely(__pyx_t_9 == ((Py_ssize_t)-1))) __PYX_ERR(0, 16, __pyx_L1_error)
   __pyx_t_3 = ((__pyx_t_9 > 1) != 0);
   if (__pyx_t_3) {
-    __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_TypeError, __pyx_tuple__6, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 14, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_TypeError, __pyx_tuple__6, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 16, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_Raise(__pyx_t_6, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __PYX_ERR(0, 14, __pyx_L1_error)
+    __PYX_ERR(0, 16, __pyx_L1_error)
   }
   /*else*/ {
     __Pyx_XDECREF(__pyx_r);
     if (unlikely(__pyx_v_signatures == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 14, __pyx_L1_error)
+      __PYX_ERR(0, 16, __pyx_L1_error)
     }
-    __pyx_t_6 = __Pyx_PyDict_GetItem(((PyObject*)__pyx_v_signatures), PyList_GET_ITEM(__pyx_v_candidates, 0)); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 14, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyDict_GetItem(((PyObject*)__pyx_v_signatures), PyList_GET_ITEM(__pyx_v_candidates, 0)); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 16, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __pyx_r = __pyx_t_6;
     __pyx_t_6 = 0;
@@ -2873,7 +2880,7 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(CYTHON_UNUS
   __Pyx_XDECREF(__pyx_t_12);
   __Pyx_XDECREF(__pyx_t_13);
   __Pyx_XDECREF(__pyx_t_14);
-  __Pyx_AddTraceback("gadgetutils.potential.__pyx_fused_cpdef", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("potential.__pyx_fused_cpdef", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_dest_sig);
@@ -2891,7 +2898,7 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_sum_inv_pairdists(CYTHON_UNUS
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_11gadgetutils_9potential_12__defaults__(CYTHON_UNUSED PyObject *__pyx_self) {
+static PyObject *__pyx_pf_9potential_12__defaults__(CYTHON_UNUSED PyObject *__pyx_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -2901,12 +2908,12 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_12__defaults__(CYTHON_UNUSED 
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__defaults__", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(__Pyx_CyFunction_Defaults(__pyx_defaults2, __pyx_self)->__pyx_arg_epsilon);
   __Pyx_GIVEREF(__Pyx_CyFunction_Defaults(__pyx_defaults2, __pyx_self)->__pyx_arg_epsilon);
   PyTuple_SET_ITEM(__pyx_t_1, 0, __Pyx_CyFunction_Defaults(__pyx_defaults2, __pyx_self)->__pyx_arg_epsilon);
-  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1);
@@ -2922,7 +2929,7 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_12__defaults__(CYTHON_UNUSED 
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_AddTraceback("gadgetutils.potential.__defaults__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("potential.__defaults__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -2931,9 +2938,9 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_12__defaults__(CYTHON_UNUSED 
 }
 
 /* Python wrapper */
-static PyObject *__pyx_fuse_0__pyx_pw_11gadgetutils_9potential_3sum_inv_pairdists(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyMethodDef __pyx_fuse_0__pyx_mdef_11gadgetutils_9potential_3sum_inv_pairdists = {"__pyx_fuse_0sum_inv_pairdists", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_fuse_0__pyx_pw_11gadgetutils_9potential_3sum_inv_pairdists, METH_VARARGS|METH_KEYWORDS, __pyx_doc_11gadgetutils_9potential_sum_inv_pairdists};
-static PyObject *__pyx_fuse_0__pyx_pw_11gadgetutils_9potential_3sum_inv_pairdists(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_fuse_0__pyx_pw_9potential_3sum_inv_pairdists(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_fuse_0__pyx_mdef_9potential_3sum_inv_pairdists = {"__pyx_fuse_0sum_inv_pairdists", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_fuse_0__pyx_pw_9potential_3sum_inv_pairdists, METH_VARARGS|METH_KEYWORDS, __pyx_doc_9potential_sum_inv_pairdists};
+static PyObject *__pyx_fuse_0__pyx_pw_9potential_3sum_inv_pairdists(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   __Pyx_memviewslice __pyx_v_pos = { 0, 0, { 0 }, { 0 }, { 0 } };
   PyObject *__pyx_v_epsilon = 0;
   int __pyx_lineno = 0;
@@ -2971,7 +2978,7 @@ static PyObject *__pyx_fuse_0__pyx_pw_11gadgetutils_9potential_3sum_inv_pairdist
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "sum_inv_pairdists") < 0)) __PYX_ERR(0, 14, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "sum_inv_pairdists") < 0)) __PYX_ERR(0, 16, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -2982,26 +2989,26 @@ static PyObject *__pyx_fuse_0__pyx_pw_11gadgetutils_9potential_3sum_inv_pairdist
         default: goto __pyx_L5_argtuple_error;
       }
     }
-    __pyx_v_pos = __Pyx_PyObject_to_MemoryviewSlice_d_dc_float(values[0], PyBUF_WRITABLE); if (unlikely(!__pyx_v_pos.memview)) __PYX_ERR(0, 14, __pyx_L3_error)
+    __pyx_v_pos = __Pyx_PyObject_to_MemoryviewSlice_d_dc_float(values[0], PyBUF_WRITABLE); if (unlikely(!__pyx_v_pos.memview)) __PYX_ERR(0, 16, __pyx_L3_error)
     __pyx_v_epsilon = values[1];
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("sum_inv_pairdists", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 14, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("sum_inv_pairdists", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 16, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("gadgetutils.potential.sum_inv_pairdists", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("potential.sum_inv_pairdists", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_11gadgetutils_9potential_2sum_inv_pairdists(__pyx_self, __pyx_v_pos, __pyx_v_epsilon);
+  __pyx_r = __pyx_pf_9potential_2sum_inv_pairdists(__pyx_self, __pyx_v_pos, __pyx_v_epsilon);
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_11gadgetutils_9potential_2sum_inv_pairdists(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_pos, PyObject *__pyx_v_epsilon) {
-  int __pyx_v_N;
+static PyObject *__pyx_pf_9potential_2sum_inv_pairdists(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_pos, PyObject *__pyx_v_epsilon) {
+  CYTHON_UNUSED int __pyx_v_N;
   int __pyx_v_dims;
   double __pyx_v_potential;
   int __pyx_v_i;
@@ -3016,8 +3023,8 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_2sum_inv_pairdists(CYTHON_UNU
   float __pyx_v_u2;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
-  int __pyx_t_1;
-  int __pyx_t_2;
+  PyObject *__pyx_t_1 = NULL;
+  float __pyx_t_2;
   int __pyx_t_3;
   int __pyx_t_4;
   int __pyx_t_5;
@@ -3025,19 +3032,19 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_2sum_inv_pairdists(CYTHON_UNU
   int __pyx_t_7;
   int __pyx_t_8;
   int __pyx_t_9;
-  Py_ssize_t __pyx_t_10;
-  Py_ssize_t __pyx_t_11;
+  int __pyx_t_10;
+  int __pyx_t_11;
   Py_ssize_t __pyx_t_12;
   Py_ssize_t __pyx_t_13;
-  PyObject *__pyx_t_14 = NULL;
-  float __pyx_t_15;
+  Py_ssize_t __pyx_t_14;
+  Py_ssize_t __pyx_t_15;
   int __pyx_t_16;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__pyx_fuse_0sum_inv_pairdists", 0);
 
-  /* "gadgetutils/potential.pyx":18
+  /* "potential.pyx":20
  *     Can be used to calculate potentials / potential energies.
  *     """
  *     cdef int N = pos.shape[0]             # <<<<<<<<<<<<<<
@@ -3046,7 +3053,7 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_2sum_inv_pairdists(CYTHON_UNU
  */
   __pyx_v_N = (__pyx_v_pos.shape[0]);
 
-  /* "gadgetutils/potential.pyx":19
+  /* "potential.pyx":21
  *     """
  *     cdef int N = pos.shape[0]
  *     cdef int dims = pos.shape[1]             # <<<<<<<<<<<<<<
@@ -3055,7 +3062,7 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_2sum_inv_pairdists(CYTHON_UNU
  */
   __pyx_v_dims = (__pyx_v_pos.shape[1]);
 
-  /* "gadgetutils/potential.pyx":20
+  /* "potential.pyx":22
  *     cdef int N = pos.shape[0]
  *     cdef int dims = pos.shape[1]
  *     cdef double potential = 0             # <<<<<<<<<<<<<<
@@ -3064,210 +3071,290 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_2sum_inv_pairdists(CYTHON_UNU
  */
   __pyx_v_potential = 0.0;
 
-  /* "gadgetutils/potential.pyx":25
+  /* "potential.pyx":27
  *     cdef my_float r, dist2, temp, h, u, W2, u2
  * 
- *     for i in range(N):             # <<<<<<<<<<<<<<
- *         for j in range(i):
- *             dist2 = 0
- */
-  __pyx_t_1 = __pyx_v_N;
-  __pyx_t_2 = __pyx_t_1;
-  for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
-    __pyx_v_i = __pyx_t_3;
-
-    /* "gadgetutils/potential.pyx":26
+ *     h = 2.8 * epsilon             # <<<<<<<<<<<<<<
  * 
- *     for i in range(N):
- *         for j in range(i):             # <<<<<<<<<<<<<<
- *             dist2 = 0
- *             for k in range(dims):
+ *     with nogil, parallel():
  */
-    __pyx_t_4 = __pyx_v_i;
-    __pyx_t_5 = __pyx_t_4;
-    for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
-      __pyx_v_j = __pyx_t_6;
+  __pyx_t_1 = PyNumber_Multiply(__pyx_float_2_8, __pyx_v_epsilon); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 27, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __pyx_PyFloat_AsFloat(__pyx_t_1); if (unlikely((__pyx_t_2 == (float)-1) && PyErr_Occurred())) __PYX_ERR(0, 27, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_v_h = __pyx_t_2;
 
-      /* "gadgetutils/potential.pyx":27
- *     for i in range(N):
- *         for j in range(i):
- *             dist2 = 0             # <<<<<<<<<<<<<<
- *             for k in range(dims):
- *                 temp = pos[i,k] - pos[j,k]
+  /* "potential.pyx":29
+ *     h = 2.8 * epsilon
+ * 
+ *     with nogil, parallel():             # <<<<<<<<<<<<<<
+ *         for i in prange(N):
+ *             for j in range(i):
  */
-      __pyx_v_dist2 = 0.0;
+  {
+      #ifdef WITH_THREAD
+      PyThreadState *_save;
+      Py_UNBLOCK_THREADS
+      __Pyx_FastGIL_Remember();
+      #endif
+      /*try:*/ {
+        {
+            #if ((defined(__APPLE__) || defined(__OSX__)) && (defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && (__GNUC_MINOR__ > 95)))))
+                #undef likely
+                #undef unlikely
+                #define likely(x)   (x)
+                #define unlikely(x) (x)
+            #endif
+            #ifdef _OPENMP
+            #pragma omp parallel  reduction(-:__pyx_v_potential) private(__pyx_t_10, __pyx_t_11, __pyx_t_12, __pyx_t_13, __pyx_t_14, __pyx_t_15, __pyx_t_16, __pyx_t_3, __pyx_t_4, __pyx_t_5, __pyx_t_6, __pyx_t_7, __pyx_t_8, __pyx_t_9)
+            #endif /* _OPENMP */
+            {
 
-      /* "gadgetutils/potential.pyx":28
- *         for j in range(i):
- *             dist2 = 0
- *             for k in range(dims):             # <<<<<<<<<<<<<<
- *                 temp = pos[i,k] - pos[j,k]
- *                 dist2 += temp * temp
- */
-      __pyx_t_7 = __pyx_v_dims;
-      __pyx_t_8 = __pyx_t_7;
-      for (__pyx_t_9 = 0; __pyx_t_9 < __pyx_t_8; __pyx_t_9+=1) {
-        __pyx_v_k = __pyx_t_9;
-
-        /* "gadgetutils/potential.pyx":29
- *             dist2 = 0
- *             for k in range(dims):
- *                 temp = pos[i,k] - pos[j,k]             # <<<<<<<<<<<<<<
- *                 dist2 += temp * temp
+                /* "potential.pyx":30
+ * 
+ *     with nogil, parallel():
+ *         for i in prange(N):             # <<<<<<<<<<<<<<
+ *             for j in range(i):
  * 
  */
-        __pyx_t_10 = __pyx_v_i;
-        __pyx_t_11 = __pyx_v_k;
-        __pyx_t_12 = __pyx_v_j;
-        __pyx_t_13 = __pyx_v_k;
-        __pyx_v_temp = ((*((float *) ( /* dim=1 */ ((char *) (((float *) ( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_10 * __pyx_v_pos.strides[0]) )) + __pyx_t_11)) ))) - (*((float *) ( /* dim=1 */ ((char *) (((float *) ( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_12 * __pyx_v_pos.strides[0]) )) + __pyx_t_13)) ))));
+                __pyx_t_3 = __pyx_v_N;
+                if ((1 == 0)) abort();
+                {
+                    __pyx_t_5 = (__pyx_t_3 - 0 + 1 - 1/abs(1)) / 1;
+                    if (__pyx_t_5 > 0)
+                    {
+                        #ifdef _OPENMP
+                        #pragma omp for lastprivate(__pyx_v_W2) lastprivate(__pyx_v_dist2) firstprivate(__pyx_v_i) lastprivate(__pyx_v_i) lastprivate(__pyx_v_j) lastprivate(__pyx_v_k) lastprivate(__pyx_v_r) lastprivate(__pyx_v_temp) lastprivate(__pyx_v_u) lastprivate(__pyx_v_u2)
+                        #endif /* _OPENMP */
+                        for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_5; __pyx_t_4++){
+                            {
+                                __pyx_v_i = (int)(0 + 1 * __pyx_t_4);
+                                /* Initialize private variables to invalid values */
+                                __pyx_v_W2 = ((float)__PYX_NAN());
+                                __pyx_v_dist2 = ((float)__PYX_NAN());
+                                __pyx_v_j = ((int)0xbad0bad0);
+                                __pyx_v_k = ((int)0xbad0bad0);
+                                __pyx_v_r = ((float)__PYX_NAN());
+                                __pyx_v_temp = ((float)__PYX_NAN());
+                                __pyx_v_u = ((float)__PYX_NAN());
+                                __pyx_v_u2 = ((float)__PYX_NAN());
 
-        /* "gadgetutils/potential.pyx":30
- *             for k in range(dims):
- *                 temp = pos[i,k] - pos[j,k]
- *                 dist2 += temp * temp             # <<<<<<<<<<<<<<
+                                /* "potential.pyx":31
+ *     with nogil, parallel():
+ *         for i in prange(N):
+ *             for j in range(i):             # <<<<<<<<<<<<<<
  * 
- *             r = sqrt(dist2)
+ *                 dist2 = 0
  */
-        __pyx_v_dist2 = (__pyx_v_dist2 + (__pyx_v_temp * __pyx_v_temp));
-      }
+                                __pyx_t_6 = __pyx_v_i;
+                                __pyx_t_7 = __pyx_t_6;
+                                for (__pyx_t_8 = 0; __pyx_t_8 < __pyx_t_7; __pyx_t_8+=1) {
+                                  __pyx_v_j = __pyx_t_8;
 
-      /* "gadgetutils/potential.pyx":32
- *                 dist2 += temp * temp
+                                  /* "potential.pyx":33
+ *             for j in range(i):
  * 
- *             r = sqrt(dist2)             # <<<<<<<<<<<<<<
- *             h = 2.8 * epsilon
- *             u = r / h
+ *                 dist2 = 0             # <<<<<<<<<<<<<<
+ *                 for k in range(dims):
+ *                     temp = pos[i,k] - pos[j,k]
  */
-      __pyx_v_r = sqrt(__pyx_v_dist2);
+                                  __pyx_v_dist2 = 0.0;
 
-      /* "gadgetutils/potential.pyx":33
+                                  /* "potential.pyx":34
  * 
- *             r = sqrt(dist2)
- *             h = 2.8 * epsilon             # <<<<<<<<<<<<<<
- *             u = r / h
+ *                 dist2 = 0
+ *                 for k in range(dims):             # <<<<<<<<<<<<<<
+ *                     temp = pos[i,k] - pos[j,k]
+ *                     dist2 = dist2 + temp * temp
+ */
+                                  __pyx_t_9 = __pyx_v_dims;
+                                  __pyx_t_10 = __pyx_t_9;
+                                  for (__pyx_t_11 = 0; __pyx_t_11 < __pyx_t_10; __pyx_t_11+=1) {
+                                    __pyx_v_k = __pyx_t_11;
+
+                                    /* "potential.pyx":35
+ *                 dist2 = 0
+ *                 for k in range(dims):
+ *                     temp = pos[i,k] - pos[j,k]             # <<<<<<<<<<<<<<
+ *                     dist2 = dist2 + temp * temp
  * 
  */
-      __pyx_t_14 = PyNumber_Multiply(__pyx_float_2_8, __pyx_v_epsilon); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 33, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_14);
-      __pyx_t_15 = __pyx_PyFloat_AsFloat(__pyx_t_14); if (unlikely((__pyx_t_15 == (float)-1) && PyErr_Occurred())) __PYX_ERR(0, 33, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
-      __pyx_v_h = __pyx_t_15;
+                                    __pyx_t_12 = __pyx_v_i;
+                                    __pyx_t_13 = __pyx_v_k;
+                                    __pyx_t_14 = __pyx_v_j;
+                                    __pyx_t_15 = __pyx_v_k;
+                                    __pyx_v_temp = ((*((float *) ( /* dim=1 */ ((char *) (((float *) ( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_12 * __pyx_v_pos.strides[0]) )) + __pyx_t_13)) ))) - (*((float *) ( /* dim=1 */ ((char *) (((float *) ( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_14 * __pyx_v_pos.strides[0]) )) + __pyx_t_15)) ))));
 
-      /* "gadgetutils/potential.pyx":34
- *             r = sqrt(dist2)
- *             h = 2.8 * epsilon
- *             u = r / h             # <<<<<<<<<<<<<<
+                                    /* "potential.pyx":36
+ *                 for k in range(dims):
+ *                     temp = pos[i,k] - pos[j,k]
+ *                     dist2 = dist2 + temp * temp             # <<<<<<<<<<<<<<
  * 
- *             if u < 0.5:
+ *                 r = sqrt(dist2)
  */
-      __pyx_v_u = (__pyx_v_r / __pyx_v_h);
+                                    __pyx_v_dist2 = (__pyx_v_dist2 + (__pyx_v_temp * __pyx_v_temp));
+                                  }
 
-      /* "gadgetutils/potential.pyx":36
- *             u = r / h
+                                  /* "potential.pyx":38
+ *                     dist2 = dist2 + temp * temp
  * 
- *             if u < 0.5:             # <<<<<<<<<<<<<<
- *                 #W2 = 16/3. * u**2 - 48/5. * u**4 + 32/5. * u**5 - 14/5.
- *                 u2 = u * u
- */
-      __pyx_t_16 = ((__pyx_v_u < 0.5) != 0);
-      if (__pyx_t_16) {
-
-        /* "gadgetutils/potential.pyx":38
- *             if u < 0.5:
- *                 #W2 = 16/3. * u**2 - 48/5. * u**4 + 32/5. * u**5 - 14/5.
- *                 u2 = u * u             # <<<<<<<<<<<<<<
- *                 W2 = -14/5. + u2 * (16/3. + u2 * (-48/5. + 32/5. * u))
- *             elif u < 1:
- */
-        __pyx_v_u2 = (__pyx_v_u * __pyx_v_u);
-
-        /* "gadgetutils/potential.pyx":39
- *                 #W2 = 16/3. * u**2 - 48/5. * u**4 + 32/5. * u**5 - 14/5.
- *                 u2 = u * u
- *                 W2 = -14/5. + u2 * (16/3. + u2 * (-48/5. + 32/5. * u))             # <<<<<<<<<<<<<<
- *             elif u < 1:
- *                 #W2 = 1/(15 * u) + 32/3. * u**2 - 16 * u**3 + 48/5. * u**4 - 32/15. * u**5 - 16/5.
- */
-        __pyx_v_W2 = ((-14.0 / 5.) + (__pyx_v_u2 * ((16.0 / 3.) + (__pyx_v_u2 * ((-48.0 / 5.) + ((32.0 / 5.) * __pyx_v_u))))));
-
-        /* "gadgetutils/potential.pyx":36
- *             u = r / h
+ *                 r = sqrt(dist2)             # <<<<<<<<<<<<<<
+ *                 u = r / h
  * 
- *             if u < 0.5:             # <<<<<<<<<<<<<<
- *                 #W2 = 16/3. * u**2 - 48/5. * u**4 + 32/5. * u**5 - 14/5.
- *                 u2 = u * u
  */
-        goto __pyx_L9;
-      }
+                                  __pyx_v_r = sqrt(__pyx_v_dist2);
 
-      /* "gadgetutils/potential.pyx":40
- *                 u2 = u * u
- *                 W2 = -14/5. + u2 * (16/3. + u2 * (-48/5. + 32/5. * u))
- *             elif u < 1:             # <<<<<<<<<<<<<<
- *                 #W2 = 1/(15 * u) + 32/3. * u**2 - 16 * u**3 + 48/5. * u**4 - 32/15. * u**5 - 16/5.
- *                 W2 = 1/(15*u) - 16/5. + u*u * (32/3. + u * (-16 + u * (48/5. - 32/15. * u)))
- */
-      __pyx_t_16 = ((__pyx_v_u < 1.0) != 0);
-      if (__pyx_t_16) {
-
-        /* "gadgetutils/potential.pyx":42
- *             elif u < 1:
- *                 #W2 = 1/(15 * u) + 32/3. * u**2 - 16 * u**3 + 48/5. * u**4 - 32/15. * u**5 - 16/5.
- *                 W2 = 1/(15*u) - 16/5. + u*u * (32/3. + u * (-16 + u * (48/5. - 32/15. * u)))             # <<<<<<<<<<<<<<
- *             else:
- *                 W2 = -1/u
- */
-        __pyx_v_W2 = (((1.0 / (15.0 * __pyx_v_u)) - (16.0 / 5.)) + ((__pyx_v_u * __pyx_v_u) * ((32.0 / 3.) + (__pyx_v_u * (-16.0 + (__pyx_v_u * ((48.0 / 5.) - ((32.0 / 15.) * __pyx_v_u))))))));
-
-        /* "gadgetutils/potential.pyx":40
- *                 u2 = u * u
- *                 W2 = -14/5. + u2 * (16/3. + u2 * (-48/5. + 32/5. * u))
- *             elif u < 1:             # <<<<<<<<<<<<<<
- *                 #W2 = 1/(15 * u) + 32/3. * u**2 - 16 * u**3 + 48/5. * u**4 - 32/15. * u**5 - 16/5.
- *                 W2 = 1/(15*u) - 16/5. + u*u * (32/3. + u * (-16 + u * (48/5. - 32/15. * u)))
- */
-        goto __pyx_L9;
-      }
-
-      /* "gadgetutils/potential.pyx":44
- *                 W2 = 1/(15*u) - 16/5. + u*u * (32/3. + u * (-16 + u * (48/5. - 32/15. * u)))
- *             else:
- *                 W2 = -1/u             # <<<<<<<<<<<<<<
+                                  /* "potential.pyx":39
  * 
- *             potential -= 1/(-h / W2)
- */
-      /*else*/ {
-        __pyx_v_W2 = (-1.0 / __pyx_v_u);
-      }
-      __pyx_L9:;
-
-      /* "gadgetutils/potential.pyx":46
- *                 W2 = -1/u
+ *                 r = sqrt(dist2)
+ *                 u = r / h             # <<<<<<<<<<<<<<
  * 
- *             potential -= 1/(-h / W2)             # <<<<<<<<<<<<<<
+ *                 if u < 0.5:
+ */
+                                  __pyx_v_u = (__pyx_v_r / __pyx_v_h);
+
+                                  /* "potential.pyx":41
+ *                 u = r / h
+ * 
+ *                 if u < 0.5:             # <<<<<<<<<<<<<<
+ *                     u2 = u * u
+ *                     W2 = -14/5. + u2 * (16/3. + u2 * (-48/5. + 32/5. * u))
+ */
+                                  __pyx_t_16 = ((__pyx_v_u < 0.5) != 0);
+                                  if (__pyx_t_16) {
+
+                                    /* "potential.pyx":42
+ * 
+ *                 if u < 0.5:
+ *                     u2 = u * u             # <<<<<<<<<<<<<<
+ *                     W2 = -14/5. + u2 * (16/3. + u2 * (-48/5. + 32/5. * u))
+ *                     r = -h / W2
+ */
+                                    __pyx_v_u2 = (__pyx_v_u * __pyx_v_u);
+
+                                    /* "potential.pyx":43
+ *                 if u < 0.5:
+ *                     u2 = u * u
+ *                     W2 = -14/5. + u2 * (16/3. + u2 * (-48/5. + 32/5. * u))             # <<<<<<<<<<<<<<
+ *                     r = -h / W2
+ *                 elif u < 1:
+ */
+                                    __pyx_v_W2 = ((-14.0 / 5.) + (__pyx_v_u2 * ((16.0 / 3.) + (__pyx_v_u2 * ((-48.0 / 5.) + ((32.0 / 5.) * __pyx_v_u))))));
+
+                                    /* "potential.pyx":44
+ *                     u2 = u * u
+ *                     W2 = -14/5. + u2 * (16/3. + u2 * (-48/5. + 32/5. * u))
+ *                     r = -h / W2             # <<<<<<<<<<<<<<
+ *                 elif u < 1:
+ *                     W2 = 1/(15*u) - 16/5. + u*u * (32/3. + u * (-16 + u * (48/5. - 32/15. * u)))
+ */
+                                    __pyx_v_r = ((-__pyx_v_h) / __pyx_v_W2);
+
+                                    /* "potential.pyx":41
+ *                 u = r / h
+ * 
+ *                 if u < 0.5:             # <<<<<<<<<<<<<<
+ *                     u2 = u * u
+ *                     W2 = -14/5. + u2 * (16/3. + u2 * (-48/5. + 32/5. * u))
+ */
+                                    goto __pyx_L18;
+                                  }
+
+                                  /* "potential.pyx":45
+ *                     W2 = -14/5. + u2 * (16/3. + u2 * (-48/5. + 32/5. * u))
+ *                     r = -h / W2
+ *                 elif u < 1:             # <<<<<<<<<<<<<<
+ *                     W2 = 1/(15*u) - 16/5. + u*u * (32/3. + u * (-16 + u * (48/5. - 32/15. * u)))
+ *                     r = -h / W2
+ */
+                                  __pyx_t_16 = ((__pyx_v_u < 1.0) != 0);
+                                  if (__pyx_t_16) {
+
+                                    /* "potential.pyx":46
+ *                     r = -h / W2
+ *                 elif u < 1:
+ *                     W2 = 1/(15*u) - 16/5. + u*u * (32/3. + u * (-16 + u * (48/5. - 32/15. * u)))             # <<<<<<<<<<<<<<
+ *                     r = -h / W2
+ * 
+ */
+                                    __pyx_v_W2 = (((1.0 / (15.0 * __pyx_v_u)) - (16.0 / 5.)) + ((__pyx_v_u * __pyx_v_u) * ((32.0 / 3.) + (__pyx_v_u * (-16.0 + (__pyx_v_u * ((48.0 / 5.) - ((32.0 / 15.) * __pyx_v_u))))))));
+
+                                    /* "potential.pyx":47
+ *                 elif u < 1:
+ *                     W2 = 1/(15*u) - 16/5. + u*u * (32/3. + u * (-16 + u * (48/5. - 32/15. * u)))
+ *                     r = -h / W2             # <<<<<<<<<<<<<<
+ * 
+ *                 potential -= 1/r
+ */
+                                    __pyx_v_r = ((-__pyx_v_h) / __pyx_v_W2);
+
+                                    /* "potential.pyx":45
+ *                     W2 = -14/5. + u2 * (16/3. + u2 * (-48/5. + 32/5. * u))
+ *                     r = -h / W2
+ *                 elif u < 1:             # <<<<<<<<<<<<<<
+ *                     W2 = 1/(15*u) - 16/5. + u*u * (32/3. + u * (-16 + u * (48/5. - 32/15. * u)))
+ *                     r = -h / W2
+ */
+                                  }
+                                  __pyx_L18:;
+
+                                  /* "potential.pyx":49
+ *                     r = -h / W2
+ * 
+ *                 potential -= 1/r             # <<<<<<<<<<<<<<
  * 
  *     return potential
  */
-      __pyx_v_potential = (__pyx_v_potential - (1.0 / ((-__pyx_v_h) / __pyx_v_W2)));
-    }
+                                  __pyx_v_potential = (__pyx_v_potential - (1.0 / __pyx_v_r));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        #if ((defined(__APPLE__) || defined(__OSX__)) && (defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && (__GNUC_MINOR__ > 95)))))
+            #undef likely
+            #undef unlikely
+            #define likely(x)   __builtin_expect(!!(x), 1)
+            #define unlikely(x) __builtin_expect(!!(x), 0)
+        #endif
+      }
+
+      /* "potential.pyx":29
+ *     h = 2.8 * epsilon
+ * 
+ *     with nogil, parallel():             # <<<<<<<<<<<<<<
+ *         for i in prange(N):
+ *             for j in range(i):
+ */
+      /*finally:*/ {
+        /*normal exit:*/{
+          #ifdef WITH_THREAD
+          __Pyx_FastGIL_Forget();
+          Py_BLOCK_THREADS
+          #endif
+          goto __pyx_L5;
+        }
+        __pyx_L5:;
+      }
   }
 
-  /* "gadgetutils/potential.pyx":48
- *             potential -= 1/(-h / W2)
+  /* "potential.pyx":51
+ *                 potential -= 1/r
  * 
  *     return potential             # <<<<<<<<<<<<<<
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_14 = PyFloat_FromDouble(__pyx_v_potential); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 48, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_14);
-  __pyx_r = __pyx_t_14;
-  __pyx_t_14 = 0;
+  __pyx_t_1 = PyFloat_FromDouble(__pyx_v_potential); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 51, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "gadgetutils/potential.pyx":14
- * @cython.nonecheck(False)
+  /* "potential.pyx":16
  * @cython.cdivision(True)
+ * @cython.initializedcheck(False)
  * def sum_inv_pairdists(my_float [:,::1] pos, epsilon=1e-2):             # <<<<<<<<<<<<<<
  *     """Calculate the sum of inverse pair distances for a collection of particles.
  *     Can be used to calculate potentials / potential energies.
@@ -3275,8 +3362,8 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_2sum_inv_pairdists(CYTHON_UNU
 
   /* function exit code */
   __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_14);
-  __Pyx_AddTraceback("gadgetutils.potential.sum_inv_pairdists", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("potential.sum_inv_pairdists", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __PYX_XDEC_MEMVIEW(&__pyx_v_pos, 1);
@@ -3285,7 +3372,7 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_2sum_inv_pairdists(CYTHON_UNU
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_11gadgetutils_9potential_14__defaults__(CYTHON_UNUSED PyObject *__pyx_self) {
+static PyObject *__pyx_pf_9potential_14__defaults__(CYTHON_UNUSED PyObject *__pyx_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -3295,12 +3382,12 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_14__defaults__(CYTHON_UNUSED 
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__defaults__", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(__Pyx_CyFunction_Defaults(__pyx_defaults3, __pyx_self)->__pyx_arg_epsilon);
   __Pyx_GIVEREF(__Pyx_CyFunction_Defaults(__pyx_defaults3, __pyx_self)->__pyx_arg_epsilon);
   PyTuple_SET_ITEM(__pyx_t_1, 0, __Pyx_CyFunction_Defaults(__pyx_defaults3, __pyx_self)->__pyx_arg_epsilon);
-  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1);
@@ -3316,7 +3403,7 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_14__defaults__(CYTHON_UNUSED 
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_AddTraceback("gadgetutils.potential.__defaults__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("potential.__defaults__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -3325,9 +3412,9 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_14__defaults__(CYTHON_UNUSED 
 }
 
 /* Python wrapper */
-static PyObject *__pyx_fuse_1__pyx_pw_11gadgetutils_9potential_5sum_inv_pairdists(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyMethodDef __pyx_fuse_1__pyx_mdef_11gadgetutils_9potential_5sum_inv_pairdists = {"__pyx_fuse_1sum_inv_pairdists", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_fuse_1__pyx_pw_11gadgetutils_9potential_5sum_inv_pairdists, METH_VARARGS|METH_KEYWORDS, __pyx_doc_11gadgetutils_9potential_sum_inv_pairdists};
-static PyObject *__pyx_fuse_1__pyx_pw_11gadgetutils_9potential_5sum_inv_pairdists(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_fuse_1__pyx_pw_9potential_5sum_inv_pairdists(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_fuse_1__pyx_mdef_9potential_5sum_inv_pairdists = {"__pyx_fuse_1sum_inv_pairdists", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_fuse_1__pyx_pw_9potential_5sum_inv_pairdists, METH_VARARGS|METH_KEYWORDS, __pyx_doc_9potential_sum_inv_pairdists};
+static PyObject *__pyx_fuse_1__pyx_pw_9potential_5sum_inv_pairdists(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   __Pyx_memviewslice __pyx_v_pos = { 0, 0, { 0 }, { 0 }, { 0 } };
   PyObject *__pyx_v_epsilon = 0;
   int __pyx_lineno = 0;
@@ -3365,7 +3452,7 @@ static PyObject *__pyx_fuse_1__pyx_pw_11gadgetutils_9potential_5sum_inv_pairdist
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "sum_inv_pairdists") < 0)) __PYX_ERR(0, 14, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "sum_inv_pairdists") < 0)) __PYX_ERR(0, 16, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -3376,26 +3463,26 @@ static PyObject *__pyx_fuse_1__pyx_pw_11gadgetutils_9potential_5sum_inv_pairdist
         default: goto __pyx_L5_argtuple_error;
       }
     }
-    __pyx_v_pos = __Pyx_PyObject_to_MemoryviewSlice_d_dc_double(values[0], PyBUF_WRITABLE); if (unlikely(!__pyx_v_pos.memview)) __PYX_ERR(0, 14, __pyx_L3_error)
+    __pyx_v_pos = __Pyx_PyObject_to_MemoryviewSlice_d_dc_double(values[0], PyBUF_WRITABLE); if (unlikely(!__pyx_v_pos.memview)) __PYX_ERR(0, 16, __pyx_L3_error)
     __pyx_v_epsilon = values[1];
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("sum_inv_pairdists", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 14, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("sum_inv_pairdists", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 16, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("gadgetutils.potential.sum_inv_pairdists", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("potential.sum_inv_pairdists", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_11gadgetutils_9potential_4sum_inv_pairdists(__pyx_self, __pyx_v_pos, __pyx_v_epsilon);
+  __pyx_r = __pyx_pf_9potential_4sum_inv_pairdists(__pyx_self, __pyx_v_pos, __pyx_v_epsilon);
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_11gadgetutils_9potential_4sum_inv_pairdists(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_pos, PyObject *__pyx_v_epsilon) {
-  int __pyx_v_N;
+static PyObject *__pyx_pf_9potential_4sum_inv_pairdists(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_pos, PyObject *__pyx_v_epsilon) {
+  CYTHON_UNUSED int __pyx_v_N;
   int __pyx_v_dims;
   double __pyx_v_potential;
   int __pyx_v_i;
@@ -3410,8 +3497,8 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_4sum_inv_pairdists(CYTHON_UNU
   double __pyx_v_u2;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
-  int __pyx_t_1;
-  int __pyx_t_2;
+  PyObject *__pyx_t_1 = NULL;
+  double __pyx_t_2;
   int __pyx_t_3;
   int __pyx_t_4;
   int __pyx_t_5;
@@ -3419,19 +3506,19 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_4sum_inv_pairdists(CYTHON_UNU
   int __pyx_t_7;
   int __pyx_t_8;
   int __pyx_t_9;
-  Py_ssize_t __pyx_t_10;
-  Py_ssize_t __pyx_t_11;
+  int __pyx_t_10;
+  int __pyx_t_11;
   Py_ssize_t __pyx_t_12;
   Py_ssize_t __pyx_t_13;
-  PyObject *__pyx_t_14 = NULL;
-  double __pyx_t_15;
+  Py_ssize_t __pyx_t_14;
+  Py_ssize_t __pyx_t_15;
   int __pyx_t_16;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__pyx_fuse_1sum_inv_pairdists", 0);
 
-  /* "gadgetutils/potential.pyx":18
+  /* "potential.pyx":20
  *     Can be used to calculate potentials / potential energies.
  *     """
  *     cdef int N = pos.shape[0]             # <<<<<<<<<<<<<<
@@ -3440,7 +3527,7 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_4sum_inv_pairdists(CYTHON_UNU
  */
   __pyx_v_N = (__pyx_v_pos.shape[0]);
 
-  /* "gadgetutils/potential.pyx":19
+  /* "potential.pyx":21
  *     """
  *     cdef int N = pos.shape[0]
  *     cdef int dims = pos.shape[1]             # <<<<<<<<<<<<<<
@@ -3449,7 +3536,7 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_4sum_inv_pairdists(CYTHON_UNU
  */
   __pyx_v_dims = (__pyx_v_pos.shape[1]);
 
-  /* "gadgetutils/potential.pyx":20
+  /* "potential.pyx":22
  *     cdef int N = pos.shape[0]
  *     cdef int dims = pos.shape[1]
  *     cdef double potential = 0             # <<<<<<<<<<<<<<
@@ -3458,210 +3545,290 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_4sum_inv_pairdists(CYTHON_UNU
  */
   __pyx_v_potential = 0.0;
 
-  /* "gadgetutils/potential.pyx":25
+  /* "potential.pyx":27
  *     cdef my_float r, dist2, temp, h, u, W2, u2
  * 
- *     for i in range(N):             # <<<<<<<<<<<<<<
- *         for j in range(i):
- *             dist2 = 0
- */
-  __pyx_t_1 = __pyx_v_N;
-  __pyx_t_2 = __pyx_t_1;
-  for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
-    __pyx_v_i = __pyx_t_3;
-
-    /* "gadgetutils/potential.pyx":26
+ *     h = 2.8 * epsilon             # <<<<<<<<<<<<<<
  * 
- *     for i in range(N):
- *         for j in range(i):             # <<<<<<<<<<<<<<
- *             dist2 = 0
- *             for k in range(dims):
+ *     with nogil, parallel():
  */
-    __pyx_t_4 = __pyx_v_i;
-    __pyx_t_5 = __pyx_t_4;
-    for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
-      __pyx_v_j = __pyx_t_6;
+  __pyx_t_1 = PyNumber_Multiply(__pyx_float_2_8, __pyx_v_epsilon); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 27, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __pyx_PyFloat_AsDouble(__pyx_t_1); if (unlikely((__pyx_t_2 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 27, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_v_h = __pyx_t_2;
 
-      /* "gadgetutils/potential.pyx":27
- *     for i in range(N):
- *         for j in range(i):
- *             dist2 = 0             # <<<<<<<<<<<<<<
- *             for k in range(dims):
- *                 temp = pos[i,k] - pos[j,k]
+  /* "potential.pyx":29
+ *     h = 2.8 * epsilon
+ * 
+ *     with nogil, parallel():             # <<<<<<<<<<<<<<
+ *         for i in prange(N):
+ *             for j in range(i):
  */
-      __pyx_v_dist2 = 0.0;
+  {
+      #ifdef WITH_THREAD
+      PyThreadState *_save;
+      Py_UNBLOCK_THREADS
+      __Pyx_FastGIL_Remember();
+      #endif
+      /*try:*/ {
+        {
+            #if ((defined(__APPLE__) || defined(__OSX__)) && (defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && (__GNUC_MINOR__ > 95)))))
+                #undef likely
+                #undef unlikely
+                #define likely(x)   (x)
+                #define unlikely(x) (x)
+            #endif
+            #ifdef _OPENMP
+            #pragma omp parallel  reduction(-:__pyx_v_potential) private(__pyx_t_10, __pyx_t_11, __pyx_t_12, __pyx_t_13, __pyx_t_14, __pyx_t_15, __pyx_t_16, __pyx_t_3, __pyx_t_4, __pyx_t_5, __pyx_t_6, __pyx_t_7, __pyx_t_8, __pyx_t_9)
+            #endif /* _OPENMP */
+            {
 
-      /* "gadgetutils/potential.pyx":28
- *         for j in range(i):
- *             dist2 = 0
- *             for k in range(dims):             # <<<<<<<<<<<<<<
- *                 temp = pos[i,k] - pos[j,k]
- *                 dist2 += temp * temp
- */
-      __pyx_t_7 = __pyx_v_dims;
-      __pyx_t_8 = __pyx_t_7;
-      for (__pyx_t_9 = 0; __pyx_t_9 < __pyx_t_8; __pyx_t_9+=1) {
-        __pyx_v_k = __pyx_t_9;
-
-        /* "gadgetutils/potential.pyx":29
- *             dist2 = 0
- *             for k in range(dims):
- *                 temp = pos[i,k] - pos[j,k]             # <<<<<<<<<<<<<<
- *                 dist2 += temp * temp
+                /* "potential.pyx":30
+ * 
+ *     with nogil, parallel():
+ *         for i in prange(N):             # <<<<<<<<<<<<<<
+ *             for j in range(i):
  * 
  */
-        __pyx_t_10 = __pyx_v_i;
-        __pyx_t_11 = __pyx_v_k;
-        __pyx_t_12 = __pyx_v_j;
-        __pyx_t_13 = __pyx_v_k;
-        __pyx_v_temp = ((*((double *) ( /* dim=1 */ ((char *) (((double *) ( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_10 * __pyx_v_pos.strides[0]) )) + __pyx_t_11)) ))) - (*((double *) ( /* dim=1 */ ((char *) (((double *) ( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_12 * __pyx_v_pos.strides[0]) )) + __pyx_t_13)) ))));
+                __pyx_t_3 = __pyx_v_N;
+                if ((1 == 0)) abort();
+                {
+                    __pyx_t_5 = (__pyx_t_3 - 0 + 1 - 1/abs(1)) / 1;
+                    if (__pyx_t_5 > 0)
+                    {
+                        #ifdef _OPENMP
+                        #pragma omp for lastprivate(__pyx_v_W2) lastprivate(__pyx_v_dist2) firstprivate(__pyx_v_i) lastprivate(__pyx_v_i) lastprivate(__pyx_v_j) lastprivate(__pyx_v_k) lastprivate(__pyx_v_r) lastprivate(__pyx_v_temp) lastprivate(__pyx_v_u) lastprivate(__pyx_v_u2)
+                        #endif /* _OPENMP */
+                        for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_5; __pyx_t_4++){
+                            {
+                                __pyx_v_i = (int)(0 + 1 * __pyx_t_4);
+                                /* Initialize private variables to invalid values */
+                                __pyx_v_W2 = ((double)__PYX_NAN());
+                                __pyx_v_dist2 = ((double)__PYX_NAN());
+                                __pyx_v_j = ((int)0xbad0bad0);
+                                __pyx_v_k = ((int)0xbad0bad0);
+                                __pyx_v_r = ((double)__PYX_NAN());
+                                __pyx_v_temp = ((double)__PYX_NAN());
+                                __pyx_v_u = ((double)__PYX_NAN());
+                                __pyx_v_u2 = ((double)__PYX_NAN());
 
-        /* "gadgetutils/potential.pyx":30
- *             for k in range(dims):
- *                 temp = pos[i,k] - pos[j,k]
- *                 dist2 += temp * temp             # <<<<<<<<<<<<<<
+                                /* "potential.pyx":31
+ *     with nogil, parallel():
+ *         for i in prange(N):
+ *             for j in range(i):             # <<<<<<<<<<<<<<
  * 
- *             r = sqrt(dist2)
+ *                 dist2 = 0
  */
-        __pyx_v_dist2 = (__pyx_v_dist2 + (__pyx_v_temp * __pyx_v_temp));
-      }
+                                __pyx_t_6 = __pyx_v_i;
+                                __pyx_t_7 = __pyx_t_6;
+                                for (__pyx_t_8 = 0; __pyx_t_8 < __pyx_t_7; __pyx_t_8+=1) {
+                                  __pyx_v_j = __pyx_t_8;
 
-      /* "gadgetutils/potential.pyx":32
- *                 dist2 += temp * temp
+                                  /* "potential.pyx":33
+ *             for j in range(i):
  * 
- *             r = sqrt(dist2)             # <<<<<<<<<<<<<<
- *             h = 2.8 * epsilon
- *             u = r / h
+ *                 dist2 = 0             # <<<<<<<<<<<<<<
+ *                 for k in range(dims):
+ *                     temp = pos[i,k] - pos[j,k]
  */
-      __pyx_v_r = sqrt(__pyx_v_dist2);
+                                  __pyx_v_dist2 = 0.0;
 
-      /* "gadgetutils/potential.pyx":33
+                                  /* "potential.pyx":34
  * 
- *             r = sqrt(dist2)
- *             h = 2.8 * epsilon             # <<<<<<<<<<<<<<
- *             u = r / h
+ *                 dist2 = 0
+ *                 for k in range(dims):             # <<<<<<<<<<<<<<
+ *                     temp = pos[i,k] - pos[j,k]
+ *                     dist2 = dist2 + temp * temp
+ */
+                                  __pyx_t_9 = __pyx_v_dims;
+                                  __pyx_t_10 = __pyx_t_9;
+                                  for (__pyx_t_11 = 0; __pyx_t_11 < __pyx_t_10; __pyx_t_11+=1) {
+                                    __pyx_v_k = __pyx_t_11;
+
+                                    /* "potential.pyx":35
+ *                 dist2 = 0
+ *                 for k in range(dims):
+ *                     temp = pos[i,k] - pos[j,k]             # <<<<<<<<<<<<<<
+ *                     dist2 = dist2 + temp * temp
  * 
  */
-      __pyx_t_14 = PyNumber_Multiply(__pyx_float_2_8, __pyx_v_epsilon); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 33, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_14);
-      __pyx_t_15 = __pyx_PyFloat_AsDouble(__pyx_t_14); if (unlikely((__pyx_t_15 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 33, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
-      __pyx_v_h = __pyx_t_15;
+                                    __pyx_t_12 = __pyx_v_i;
+                                    __pyx_t_13 = __pyx_v_k;
+                                    __pyx_t_14 = __pyx_v_j;
+                                    __pyx_t_15 = __pyx_v_k;
+                                    __pyx_v_temp = ((*((double *) ( /* dim=1 */ ((char *) (((double *) ( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_12 * __pyx_v_pos.strides[0]) )) + __pyx_t_13)) ))) - (*((double *) ( /* dim=1 */ ((char *) (((double *) ( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_14 * __pyx_v_pos.strides[0]) )) + __pyx_t_15)) ))));
 
-      /* "gadgetutils/potential.pyx":34
- *             r = sqrt(dist2)
- *             h = 2.8 * epsilon
- *             u = r / h             # <<<<<<<<<<<<<<
+                                    /* "potential.pyx":36
+ *                 for k in range(dims):
+ *                     temp = pos[i,k] - pos[j,k]
+ *                     dist2 = dist2 + temp * temp             # <<<<<<<<<<<<<<
  * 
- *             if u < 0.5:
+ *                 r = sqrt(dist2)
  */
-      __pyx_v_u = (__pyx_v_r / __pyx_v_h);
+                                    __pyx_v_dist2 = (__pyx_v_dist2 + (__pyx_v_temp * __pyx_v_temp));
+                                  }
 
-      /* "gadgetutils/potential.pyx":36
- *             u = r / h
+                                  /* "potential.pyx":38
+ *                     dist2 = dist2 + temp * temp
  * 
- *             if u < 0.5:             # <<<<<<<<<<<<<<
- *                 #W2 = 16/3. * u**2 - 48/5. * u**4 + 32/5. * u**5 - 14/5.
- *                 u2 = u * u
- */
-      __pyx_t_16 = ((__pyx_v_u < 0.5) != 0);
-      if (__pyx_t_16) {
-
-        /* "gadgetutils/potential.pyx":38
- *             if u < 0.5:
- *                 #W2 = 16/3. * u**2 - 48/5. * u**4 + 32/5. * u**5 - 14/5.
- *                 u2 = u * u             # <<<<<<<<<<<<<<
- *                 W2 = -14/5. + u2 * (16/3. + u2 * (-48/5. + 32/5. * u))
- *             elif u < 1:
- */
-        __pyx_v_u2 = (__pyx_v_u * __pyx_v_u);
-
-        /* "gadgetutils/potential.pyx":39
- *                 #W2 = 16/3. * u**2 - 48/5. * u**4 + 32/5. * u**5 - 14/5.
- *                 u2 = u * u
- *                 W2 = -14/5. + u2 * (16/3. + u2 * (-48/5. + 32/5. * u))             # <<<<<<<<<<<<<<
- *             elif u < 1:
- *                 #W2 = 1/(15 * u) + 32/3. * u**2 - 16 * u**3 + 48/5. * u**4 - 32/15. * u**5 - 16/5.
- */
-        __pyx_v_W2 = ((-14.0 / 5.) + (__pyx_v_u2 * ((16.0 / 3.) + (__pyx_v_u2 * ((-48.0 / 5.) + ((32.0 / 5.) * __pyx_v_u))))));
-
-        /* "gadgetutils/potential.pyx":36
- *             u = r / h
+ *                 r = sqrt(dist2)             # <<<<<<<<<<<<<<
+ *                 u = r / h
  * 
- *             if u < 0.5:             # <<<<<<<<<<<<<<
- *                 #W2 = 16/3. * u**2 - 48/5. * u**4 + 32/5. * u**5 - 14/5.
- *                 u2 = u * u
  */
-        goto __pyx_L9;
-      }
+                                  __pyx_v_r = sqrt(__pyx_v_dist2);
 
-      /* "gadgetutils/potential.pyx":40
- *                 u2 = u * u
- *                 W2 = -14/5. + u2 * (16/3. + u2 * (-48/5. + 32/5. * u))
- *             elif u < 1:             # <<<<<<<<<<<<<<
- *                 #W2 = 1/(15 * u) + 32/3. * u**2 - 16 * u**3 + 48/5. * u**4 - 32/15. * u**5 - 16/5.
- *                 W2 = 1/(15*u) - 16/5. + u*u * (32/3. + u * (-16 + u * (48/5. - 32/15. * u)))
- */
-      __pyx_t_16 = ((__pyx_v_u < 1.0) != 0);
-      if (__pyx_t_16) {
-
-        /* "gadgetutils/potential.pyx":42
- *             elif u < 1:
- *                 #W2 = 1/(15 * u) + 32/3. * u**2 - 16 * u**3 + 48/5. * u**4 - 32/15. * u**5 - 16/5.
- *                 W2 = 1/(15*u) - 16/5. + u*u * (32/3. + u * (-16 + u * (48/5. - 32/15. * u)))             # <<<<<<<<<<<<<<
- *             else:
- *                 W2 = -1/u
- */
-        __pyx_v_W2 = (((1.0 / (15.0 * __pyx_v_u)) - (16.0 / 5.)) + ((__pyx_v_u * __pyx_v_u) * ((32.0 / 3.) + (__pyx_v_u * (-16.0 + (__pyx_v_u * ((48.0 / 5.) - ((32.0 / 15.) * __pyx_v_u))))))));
-
-        /* "gadgetutils/potential.pyx":40
- *                 u2 = u * u
- *                 W2 = -14/5. + u2 * (16/3. + u2 * (-48/5. + 32/5. * u))
- *             elif u < 1:             # <<<<<<<<<<<<<<
- *                 #W2 = 1/(15 * u) + 32/3. * u**2 - 16 * u**3 + 48/5. * u**4 - 32/15. * u**5 - 16/5.
- *                 W2 = 1/(15*u) - 16/5. + u*u * (32/3. + u * (-16 + u * (48/5. - 32/15. * u)))
- */
-        goto __pyx_L9;
-      }
-
-      /* "gadgetutils/potential.pyx":44
- *                 W2 = 1/(15*u) - 16/5. + u*u * (32/3. + u * (-16 + u * (48/5. - 32/15. * u)))
- *             else:
- *                 W2 = -1/u             # <<<<<<<<<<<<<<
+                                  /* "potential.pyx":39
  * 
- *             potential -= 1/(-h / W2)
- */
-      /*else*/ {
-        __pyx_v_W2 = (-1.0 / __pyx_v_u);
-      }
-      __pyx_L9:;
-
-      /* "gadgetutils/potential.pyx":46
- *                 W2 = -1/u
+ *                 r = sqrt(dist2)
+ *                 u = r / h             # <<<<<<<<<<<<<<
  * 
- *             potential -= 1/(-h / W2)             # <<<<<<<<<<<<<<
+ *                 if u < 0.5:
+ */
+                                  __pyx_v_u = (__pyx_v_r / __pyx_v_h);
+
+                                  /* "potential.pyx":41
+ *                 u = r / h
+ * 
+ *                 if u < 0.5:             # <<<<<<<<<<<<<<
+ *                     u2 = u * u
+ *                     W2 = -14/5. + u2 * (16/3. + u2 * (-48/5. + 32/5. * u))
+ */
+                                  __pyx_t_16 = ((__pyx_v_u < 0.5) != 0);
+                                  if (__pyx_t_16) {
+
+                                    /* "potential.pyx":42
+ * 
+ *                 if u < 0.5:
+ *                     u2 = u * u             # <<<<<<<<<<<<<<
+ *                     W2 = -14/5. + u2 * (16/3. + u2 * (-48/5. + 32/5. * u))
+ *                     r = -h / W2
+ */
+                                    __pyx_v_u2 = (__pyx_v_u * __pyx_v_u);
+
+                                    /* "potential.pyx":43
+ *                 if u < 0.5:
+ *                     u2 = u * u
+ *                     W2 = -14/5. + u2 * (16/3. + u2 * (-48/5. + 32/5. * u))             # <<<<<<<<<<<<<<
+ *                     r = -h / W2
+ *                 elif u < 1:
+ */
+                                    __pyx_v_W2 = ((-14.0 / 5.) + (__pyx_v_u2 * ((16.0 / 3.) + (__pyx_v_u2 * ((-48.0 / 5.) + ((32.0 / 5.) * __pyx_v_u))))));
+
+                                    /* "potential.pyx":44
+ *                     u2 = u * u
+ *                     W2 = -14/5. + u2 * (16/3. + u2 * (-48/5. + 32/5. * u))
+ *                     r = -h / W2             # <<<<<<<<<<<<<<
+ *                 elif u < 1:
+ *                     W2 = 1/(15*u) - 16/5. + u*u * (32/3. + u * (-16 + u * (48/5. - 32/15. * u)))
+ */
+                                    __pyx_v_r = ((-__pyx_v_h) / __pyx_v_W2);
+
+                                    /* "potential.pyx":41
+ *                 u = r / h
+ * 
+ *                 if u < 0.5:             # <<<<<<<<<<<<<<
+ *                     u2 = u * u
+ *                     W2 = -14/5. + u2 * (16/3. + u2 * (-48/5. + 32/5. * u))
+ */
+                                    goto __pyx_L18;
+                                  }
+
+                                  /* "potential.pyx":45
+ *                     W2 = -14/5. + u2 * (16/3. + u2 * (-48/5. + 32/5. * u))
+ *                     r = -h / W2
+ *                 elif u < 1:             # <<<<<<<<<<<<<<
+ *                     W2 = 1/(15*u) - 16/5. + u*u * (32/3. + u * (-16 + u * (48/5. - 32/15. * u)))
+ *                     r = -h / W2
+ */
+                                  __pyx_t_16 = ((__pyx_v_u < 1.0) != 0);
+                                  if (__pyx_t_16) {
+
+                                    /* "potential.pyx":46
+ *                     r = -h / W2
+ *                 elif u < 1:
+ *                     W2 = 1/(15*u) - 16/5. + u*u * (32/3. + u * (-16 + u * (48/5. - 32/15. * u)))             # <<<<<<<<<<<<<<
+ *                     r = -h / W2
+ * 
+ */
+                                    __pyx_v_W2 = (((1.0 / (15.0 * __pyx_v_u)) - (16.0 / 5.)) + ((__pyx_v_u * __pyx_v_u) * ((32.0 / 3.) + (__pyx_v_u * (-16.0 + (__pyx_v_u * ((48.0 / 5.) - ((32.0 / 15.) * __pyx_v_u))))))));
+
+                                    /* "potential.pyx":47
+ *                 elif u < 1:
+ *                     W2 = 1/(15*u) - 16/5. + u*u * (32/3. + u * (-16 + u * (48/5. - 32/15. * u)))
+ *                     r = -h / W2             # <<<<<<<<<<<<<<
+ * 
+ *                 potential -= 1/r
+ */
+                                    __pyx_v_r = ((-__pyx_v_h) / __pyx_v_W2);
+
+                                    /* "potential.pyx":45
+ *                     W2 = -14/5. + u2 * (16/3. + u2 * (-48/5. + 32/5. * u))
+ *                     r = -h / W2
+ *                 elif u < 1:             # <<<<<<<<<<<<<<
+ *                     W2 = 1/(15*u) - 16/5. + u*u * (32/3. + u * (-16 + u * (48/5. - 32/15. * u)))
+ *                     r = -h / W2
+ */
+                                  }
+                                  __pyx_L18:;
+
+                                  /* "potential.pyx":49
+ *                     r = -h / W2
+ * 
+ *                 potential -= 1/r             # <<<<<<<<<<<<<<
  * 
  *     return potential
  */
-      __pyx_v_potential = (__pyx_v_potential - (1.0 / ((-__pyx_v_h) / __pyx_v_W2)));
-    }
+                                  __pyx_v_potential = (__pyx_v_potential - (1.0 / __pyx_v_r));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        #if ((defined(__APPLE__) || defined(__OSX__)) && (defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && (__GNUC_MINOR__ > 95)))))
+            #undef likely
+            #undef unlikely
+            #define likely(x)   __builtin_expect(!!(x), 1)
+            #define unlikely(x) __builtin_expect(!!(x), 0)
+        #endif
+      }
+
+      /* "potential.pyx":29
+ *     h = 2.8 * epsilon
+ * 
+ *     with nogil, parallel():             # <<<<<<<<<<<<<<
+ *         for i in prange(N):
+ *             for j in range(i):
+ */
+      /*finally:*/ {
+        /*normal exit:*/{
+          #ifdef WITH_THREAD
+          __Pyx_FastGIL_Forget();
+          Py_BLOCK_THREADS
+          #endif
+          goto __pyx_L5;
+        }
+        __pyx_L5:;
+      }
   }
 
-  /* "gadgetutils/potential.pyx":48
- *             potential -= 1/(-h / W2)
+  /* "potential.pyx":51
+ *                 potential -= 1/r
  * 
  *     return potential             # <<<<<<<<<<<<<<
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_14 = PyFloat_FromDouble(__pyx_v_potential); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 48, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_14);
-  __pyx_r = __pyx_t_14;
-  __pyx_t_14 = 0;
+  __pyx_t_1 = PyFloat_FromDouble(__pyx_v_potential); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 51, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "gadgetutils/potential.pyx":14
- * @cython.nonecheck(False)
+  /* "potential.pyx":16
  * @cython.cdivision(True)
+ * @cython.initializedcheck(False)
  * def sum_inv_pairdists(my_float [:,::1] pos, epsilon=1e-2):             # <<<<<<<<<<<<<<
  *     """Calculate the sum of inverse pair distances for a collection of particles.
  *     Can be used to calculate potentials / potential energies.
@@ -3669,8 +3836,8 @@ static PyObject *__pyx_pf_11gadgetutils_9potential_4sum_inv_pairdists(CYTHON_UNU
 
   /* function exit code */
   __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_14);
-  __Pyx_AddTraceback("gadgetutils.potential.sum_inv_pairdists", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("potential.sum_inv_pairdists", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __PYX_XDEC_MEMVIEW(&__pyx_v_pos, 1);
@@ -16819,7 +16986,7 @@ static PyBufferProcs __pyx_tp_as_buffer_array = {
 
 static PyTypeObject __pyx_type___pyx_array = {
   PyVarObject_HEAD_INIT(0, 0)
-  "gadgetutils.potential.array", /*tp_name*/
+  "potential.array", /*tp_name*/
   sizeof(struct __pyx_array_obj), /*tp_basicsize*/
   0, /*tp_itemsize*/
   __pyx_tp_dealloc_array, /*tp_dealloc*/
@@ -16941,7 +17108,7 @@ static PyMethodDef __pyx_methods_Enum[] = {
 
 static PyTypeObject __pyx_type___pyx_MemviewEnum = {
   PyVarObject_HEAD_INIT(0, 0)
-  "gadgetutils.potential.Enum", /*tp_name*/
+  "potential.Enum", /*tp_name*/
   sizeof(struct __pyx_MemviewEnum_obj), /*tp_basicsize*/
   0, /*tp_itemsize*/
   __pyx_tp_dealloc_Enum, /*tp_dealloc*/
@@ -17205,7 +17372,7 @@ static PyBufferProcs __pyx_tp_as_buffer_memoryview = {
 
 static PyTypeObject __pyx_type___pyx_memoryview = {
   PyVarObject_HEAD_INIT(0, 0)
-  "gadgetutils.potential.memoryview", /*tp_name*/
+  "potential.memoryview", /*tp_name*/
   sizeof(struct __pyx_memoryview_obj), /*tp_basicsize*/
   0, /*tp_itemsize*/
   __pyx_tp_dealloc_memoryview, /*tp_dealloc*/
@@ -17346,7 +17513,7 @@ static struct PyGetSetDef __pyx_getsets__memoryviewslice[] = {
 
 static PyTypeObject __pyx_type___pyx_memoryviewslice = {
   PyVarObject_HEAD_INIT(0, 0)
-  "gadgetutils.potential._memoryviewslice", /*tp_name*/
+  "potential._memoryviewslice", /*tp_name*/
   sizeof(struct __pyx_memoryviewslice_obj), /*tp_basicsize*/
   0, /*tp_itemsize*/
   __pyx_tp_dealloc__memoryviewslice, /*tp_dealloc*/
@@ -17526,7 +17693,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_format, __pyx_k_format, sizeof(__pyx_k_format), 0, 0, 1, 1},
   {&__pyx_n_s_fortran, __pyx_k_fortran, sizeof(__pyx_k_fortran), 0, 0, 1, 1},
   {&__pyx_n_u_fortran, __pyx_k_fortran, sizeof(__pyx_k_fortran), 0, 1, 0, 1},
-  {&__pyx_n_s_gadgetutils_potential, __pyx_k_gadgetutils_potential, sizeof(__pyx_k_gadgetutils_potential), 0, 0, 1, 1},
   {&__pyx_kp_s_gadgetutils_potential_pyx, __pyx_k_gadgetutils_potential_pyx, sizeof(__pyx_k_gadgetutils_potential_pyx), 0, 0, 1, 0},
   {&__pyx_n_s_getstate, __pyx_k_getstate, sizeof(__pyx_k_getstate), 0, 0, 1, 1},
   {&__pyx_kp_s_got_differing_extents_in_dimensi, __pyx_k_got_differing_extents_in_dimensi, sizeof(__pyx_k_got_differing_extents_in_dimensi), 0, 0, 1, 0},
@@ -17594,8 +17760,8 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {0, 0, 0, 0, 0, 0, 0}
 };
 static CYTHON_SMALL_CODE int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) __PYX_ERR(0, 14, __pyx_L1_error)
-  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) __PYX_ERR(0, 16, __pyx_L1_error)
+  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 16, __pyx_L1_error)
   __pyx_builtin_ValueError = __Pyx_GetBuiltinName(__pyx_n_s_ValueError); if (!__pyx_builtin_ValueError) __PYX_ERR(1, 133, __pyx_L1_error)
   __pyx_builtin_MemoryError = __Pyx_GetBuiltinName(__pyx_n_s_MemoryError); if (!__pyx_builtin_MemoryError) __PYX_ERR(1, 148, __pyx_L1_error)
   __pyx_builtin_enumerate = __Pyx_GetBuiltinName(__pyx_n_s_enumerate); if (!__pyx_builtin_enumerate) __PYX_ERR(1, 151, __pyx_L1_error)
@@ -17611,17 +17777,17 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "gadgetutils/potential.pyx":14
- * @cython.nonecheck(False)
+  /* "potential.pyx":16
  * @cython.cdivision(True)
+ * @cython.initializedcheck(False)
  * def sum_inv_pairdists(my_float [:,::1] pos, epsilon=1e-2):             # <<<<<<<<<<<<<<
  *     """Calculate the sum of inverse pair distances for a collection of particles.
  *     Can be used to calculate potentials / potential energies.
  */
-  __pyx_tuple__5 = PyTuple_Pack(1, __pyx_kp_s_No_matching_signature_found); if (unlikely(!__pyx_tuple__5)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_tuple__5 = PyTuple_Pack(1, __pyx_kp_s_No_matching_signature_found); if (unlikely(!__pyx_tuple__5)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__5);
   __Pyx_GIVEREF(__pyx_tuple__5);
-  __pyx_tuple__6 = PyTuple_Pack(1, __pyx_kp_s_Function_call_with_ambiguous_arg); if (unlikely(!__pyx_tuple__6)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_tuple__6 = PyTuple_Pack(1, __pyx_kp_s_Function_call_with_ambiguous_arg); if (unlikely(!__pyx_tuple__6)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__6);
   __Pyx_GIVEREF(__pyx_tuple__6);
 
@@ -17817,17 +17983,17 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__24);
   __Pyx_GIVEREF(__pyx_tuple__24);
 
-  /* "gadgetutils/potential.pyx":14
- * @cython.nonecheck(False)
+  /* "potential.pyx":16
  * @cython.cdivision(True)
+ * @cython.initializedcheck(False)
  * def sum_inv_pairdists(my_float [:,::1] pos, epsilon=1e-2):             # <<<<<<<<<<<<<<
  *     """Calculate the sum of inverse pair distances for a collection of particles.
  *     Can be used to calculate potentials / potential energies.
  */
-  __pyx_tuple__25 = PyTuple_Pack(15, __pyx_n_s_pos, __pyx_n_s_epsilon, __pyx_n_s_N, __pyx_n_s_dims, __pyx_n_s_potential, __pyx_n_s_i, __pyx_n_s_j, __pyx_n_s_k, __pyx_n_s_r, __pyx_n_s_dist2, __pyx_n_s_temp, __pyx_n_s_h, __pyx_n_s_u, __pyx_n_s_W2, __pyx_n_s_u2); if (unlikely(!__pyx_tuple__25)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_tuple__25 = PyTuple_Pack(15, __pyx_n_s_pos, __pyx_n_s_epsilon, __pyx_n_s_N, __pyx_n_s_dims, __pyx_n_s_potential, __pyx_n_s_i, __pyx_n_s_j, __pyx_n_s_k, __pyx_n_s_r, __pyx_n_s_dist2, __pyx_n_s_temp, __pyx_n_s_h, __pyx_n_s_u, __pyx_n_s_W2, __pyx_n_s_u2); if (unlikely(!__pyx_tuple__25)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__25);
   __Pyx_GIVEREF(__pyx_tuple__25);
-  __pyx_codeobj__26 = (PyObject*)__Pyx_PyCode_New(2, 0, 15, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__25, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_gadgetutils_potential_pyx, __pyx_n_s_sum_inv_pairdists, 14, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__26)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_codeobj__26 = (PyObject*)__Pyx_PyCode_New(2, 0, 15, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__25, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_gadgetutils_potential_pyx, __pyx_n_s_sum_inv_pairdists, 16, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__26)) __PYX_ERR(0, 16, __pyx_L1_error)
 
   /* "View.MemoryView":286
  *         return self.name
@@ -17901,6 +18067,13 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
 }
 
 static CYTHON_SMALL_CODE int __Pyx_InitGlobals(void) {
+  /* InitThreads.init */
+  #if defined(WITH_THREAD) && PY_VERSION_HEX < 0x030700F0
+PyEval_InitThreads();
+#endif
+
+if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 1, __pyx_L1_error)
+
   if (__Pyx_InitStrings(__pyx_string_tab) < 0) __PYX_ERR(0, 1, __pyx_L1_error);
   __pyx_float_2_8 = PyFloat_FromDouble(2.8); if (unlikely(!__pyx_float_2_8)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_0 = PyInt_FromLong(0); if (unlikely(!__pyx_int_0)) __PYX_ERR(0, 1, __pyx_L1_error)
@@ -18214,14 +18387,14 @@ if (!__Pyx_RefNanny) {
   #if PY_MAJOR_VERSION < 3 && (__PYX_DEFAULT_STRING_ENCODING_IS_ASCII || __PYX_DEFAULT_STRING_ENCODING_IS_DEFAULT)
   if (__Pyx_init_sys_getdefaultencoding_params() < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   #endif
-  if (__pyx_module_is_main_gadgetutils__potential) {
+  if (__pyx_module_is_main_potential) {
     if (PyObject_SetAttr(__pyx_m, __pyx_n_s_name_2, __pyx_n_s_main) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   }
   #if PY_MAJOR_VERSION >= 3
   {
     PyObject *modules = PyImport_GetModuleDict(); if (unlikely(!modules)) __PYX_ERR(0, 1, __pyx_L1_error)
-    if (!PyDict_GetItemString(modules, "gadgetutils.potential")) {
-      if (unlikely(PyDict_SetItemString(modules, "gadgetutils.potential", __pyx_m) < 0)) __PYX_ERR(0, 1, __pyx_L1_error)
+    if (!PyDict_GetItemString(modules, "potential")) {
+      if (unlikely(PyDict_SetItemString(modules, "potential", __pyx_m) < 0)) __PYX_ERR(0, 1, __pyx_L1_error)
     }
   }
   #endif
@@ -18242,65 +18415,65 @@ if (!__Pyx_RefNanny) {
   if (__Pyx_patch_abc() < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   #endif
 
-  /* "gadgetutils/potential.pyx":14
- * @cython.nonecheck(False)
+  /* "potential.pyx":16
  * @cython.cdivision(True)
+ * @cython.initializedcheck(False)
  * def sum_inv_pairdists(my_float [:,::1] pos, epsilon=1e-2):             # <<<<<<<<<<<<<<
  *     """Calculate the sum of inverse pair distances for a collection of particles.
  *     Can be used to calculate potentials / potential energies.
  */
-  __pyx_t_1 = PyFloat_FromDouble(1e-2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_1 = PyFloat_FromDouble(1e-2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_1 = PyFloat_FromDouble(1e-2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_1 = PyFloat_FromDouble(1e-2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_k_ = __pyx_t_1;
   __Pyx_GIVEREF(__pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __pyx_FusedFunction_New(&__pyx_fuse_0__pyx_mdef_11gadgetutils_9potential_3sum_inv_pairdists, 0, __pyx_n_s_sum_inv_pairdists, NULL, __pyx_n_s_gadgetutils_potential, __pyx_d, ((PyObject *)__pyx_codeobj__26)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_3 = __pyx_FusedFunction_New(&__pyx_fuse_0__pyx_mdef_9potential_3sum_inv_pairdists, 0, __pyx_n_s_sum_inv_pairdists, NULL, __pyx_n_s_potential, __pyx_d, ((PyObject *)__pyx_codeobj__26)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (!__Pyx_CyFunction_InitDefaults(__pyx_t_3, sizeof(__pyx_defaults2), 1)) __PYX_ERR(0, 14, __pyx_L1_error)
-  __pyx_t_4 = PyFloat_FromDouble(1e-2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 14, __pyx_L1_error)
+  if (!__Pyx_CyFunction_InitDefaults(__pyx_t_3, sizeof(__pyx_defaults2), 1)) __PYX_ERR(0, 16, __pyx_L1_error)
+  __pyx_t_4 = PyFloat_FromDouble(1e-2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_CyFunction_Defaults(__pyx_defaults2, __pyx_t_3)->__pyx_arg_epsilon = __pyx_t_4;
   __Pyx_GIVEREF(__pyx_t_4);
   __pyx_t_4 = 0;
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_3, __pyx_t_2);
-  __Pyx_CyFunction_SetDefaultsGetter(__pyx_t_3, __pyx_pf_11gadgetutils_9potential_12__defaults__);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_float, __pyx_t_3) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
+  __Pyx_CyFunction_SetDefaultsGetter(__pyx_t_3, __pyx_pf_9potential_12__defaults__);
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_float, __pyx_t_3) < 0) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __pyx_FusedFunction_New(&__pyx_fuse_1__pyx_mdef_11gadgetutils_9potential_5sum_inv_pairdists, 0, __pyx_n_s_sum_inv_pairdists, NULL, __pyx_n_s_gadgetutils_potential, __pyx_d, ((PyObject *)__pyx_codeobj__26)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_3 = __pyx_FusedFunction_New(&__pyx_fuse_1__pyx_mdef_9potential_5sum_inv_pairdists, 0, __pyx_n_s_sum_inv_pairdists, NULL, __pyx_n_s_potential, __pyx_d, ((PyObject *)__pyx_codeobj__26)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (!__Pyx_CyFunction_InitDefaults(__pyx_t_3, sizeof(__pyx_defaults3), 1)) __PYX_ERR(0, 14, __pyx_L1_error)
-  __pyx_t_4 = PyFloat_FromDouble(1e-2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 14, __pyx_L1_error)
+  if (!__Pyx_CyFunction_InitDefaults(__pyx_t_3, sizeof(__pyx_defaults3), 1)) __PYX_ERR(0, 16, __pyx_L1_error)
+  __pyx_t_4 = PyFloat_FromDouble(1e-2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_CyFunction_Defaults(__pyx_defaults3, __pyx_t_3)->__pyx_arg_epsilon = __pyx_t_4;
   __Pyx_GIVEREF(__pyx_t_4);
   __pyx_t_4 = 0;
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_3, __pyx_t_2);
-  __Pyx_CyFunction_SetDefaultsGetter(__pyx_t_3, __pyx_pf_11gadgetutils_9potential_14__defaults__);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_double, __pyx_t_3) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
+  __Pyx_CyFunction_SetDefaultsGetter(__pyx_t_3, __pyx_pf_9potential_14__defaults__);
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_double, __pyx_t_3) < 0) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __pyx_FusedFunction_New(&__pyx_mdef_11gadgetutils_9potential_1sum_inv_pairdists, 0, __pyx_n_s_sum_inv_pairdists, NULL, __pyx_n_s_gadgetutils_potential, __pyx_d, ((PyObject *)__pyx_codeobj__26)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_3 = __pyx_FusedFunction_New(&__pyx_mdef_9potential_1sum_inv_pairdists, 0, __pyx_n_s_sum_inv_pairdists, NULL, __pyx_n_s_potential, __pyx_d, ((PyObject *)__pyx_codeobj__26)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_3, __pyx_t_2);
   ((__pyx_FusedFunctionObject *) __pyx_t_3)->__signatures__ = __pyx_t_1;
   __Pyx_GIVEREF(__pyx_t_1);
   __pyx_t_1 = 0;
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_sum_inv_pairdists, __pyx_t_3) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_sum_inv_pairdists, __pyx_t_3) < 0) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "gadgetutils/potential.pyx":1
- * cimport cython             # <<<<<<<<<<<<<<
+  /* "potential.pyx":1
+ * from cython.parallel import parallel, prange             # <<<<<<<<<<<<<<
+ * cimport cython
  * from libc.math cimport sqrt
- * 
  */
   __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
@@ -18470,11 +18643,11 @@ if (!__Pyx_RefNanny) {
   __Pyx_XDECREF(__pyx_t_4);
   if (__pyx_m) {
     if (__pyx_d) {
-      __Pyx_AddTraceback("init gadgetutils.potential", __pyx_clineno, __pyx_lineno, __pyx_filename);
+      __Pyx_AddTraceback("init potential", __pyx_clineno, __pyx_lineno, __pyx_filename);
     }
     Py_CLEAR(__pyx_m);
   } else if (!PyErr_Occurred()) {
-    PyErr_SetString(PyExc_ImportError, "init gadgetutils.potential");
+    PyErr_SetString(PyExc_ImportError, "init potential");
   }
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();
