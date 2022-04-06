@@ -152,7 +152,7 @@ class HaloCatalog(Snapshot):
     def get_particles(self, halo_i, subhalo=False):
         """Return indicies of particles that are part of the given halo."""
         offset = self.offsets_sh[halo_i] if subhalo else self.offsets[halo_i]
-        length = self.lengths_sh[halo_i] if subhalo else self.offsets[halo_i]
+        length = self.lengths_sh[halo_i] if subhalo else self.lengths[halo_i]
         return np.arange(offset, offset+length)
 
     def get_particle_ids(self, halo_i, particle_data, subhalo=False):
