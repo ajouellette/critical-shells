@@ -3088,7 +3088,7 @@ static PyObject *__pyx_pf_9potential_2sum_inv_pairdists(CYTHON_UNUSED PyObject *
  *     h = 2.8 * epsilon
  * 
  *     with nogil, parallel():             # <<<<<<<<<<<<<<
- *         for i in prange(N):
+ *         for i in prange(N, schedule="dynamic"):
  *             for j in range(i):
  */
   {
@@ -3113,7 +3113,7 @@ static PyObject *__pyx_pf_9potential_2sum_inv_pairdists(CYTHON_UNUSED PyObject *
                 /* "potential.pyx":30
  * 
  *     with nogil, parallel():
- *         for i in prange(N):             # <<<<<<<<<<<<<<
+ *         for i in prange(N, schedule="dynamic"):             # <<<<<<<<<<<<<<
  *             for j in range(i):
  * 
  */
@@ -3124,7 +3124,7 @@ static PyObject *__pyx_pf_9potential_2sum_inv_pairdists(CYTHON_UNUSED PyObject *
                     if (__pyx_t_5 > 0)
                     {
                         #ifdef _OPENMP
-                        #pragma omp for lastprivate(__pyx_v_W2) lastprivate(__pyx_v_dist2) firstprivate(__pyx_v_i) lastprivate(__pyx_v_i) lastprivate(__pyx_v_j) lastprivate(__pyx_v_k) lastprivate(__pyx_v_r) lastprivate(__pyx_v_temp) lastprivate(__pyx_v_u) lastprivate(__pyx_v_u2)
+                        #pragma omp for lastprivate(__pyx_v_W2) lastprivate(__pyx_v_dist2) firstprivate(__pyx_v_i) lastprivate(__pyx_v_i) lastprivate(__pyx_v_j) lastprivate(__pyx_v_k) lastprivate(__pyx_v_r) lastprivate(__pyx_v_temp) lastprivate(__pyx_v_u) lastprivate(__pyx_v_u2) schedule(dynamic)
                         #endif /* _OPENMP */
                         for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_5; __pyx_t_4++){
                             {
@@ -3141,7 +3141,7 @@ static PyObject *__pyx_pf_9potential_2sum_inv_pairdists(CYTHON_UNUSED PyObject *
 
                                 /* "potential.pyx":31
  *     with nogil, parallel():
- *         for i in prange(N):
+ *         for i in prange(N, schedule="dynamic"):
  *             for j in range(i):             # <<<<<<<<<<<<<<
  * 
  *                 dist2 = 0
@@ -3325,7 +3325,7 @@ static PyObject *__pyx_pf_9potential_2sum_inv_pairdists(CYTHON_UNUSED PyObject *
  *     h = 2.8 * epsilon
  * 
  *     with nogil, parallel():             # <<<<<<<<<<<<<<
- *         for i in prange(N):
+ *         for i in prange(N, schedule="dynamic"):
  *             for j in range(i):
  */
       /*finally:*/ {
@@ -3562,7 +3562,7 @@ static PyObject *__pyx_pf_9potential_4sum_inv_pairdists(CYTHON_UNUSED PyObject *
  *     h = 2.8 * epsilon
  * 
  *     with nogil, parallel():             # <<<<<<<<<<<<<<
- *         for i in prange(N):
+ *         for i in prange(N, schedule="dynamic"):
  *             for j in range(i):
  */
   {
@@ -3587,7 +3587,7 @@ static PyObject *__pyx_pf_9potential_4sum_inv_pairdists(CYTHON_UNUSED PyObject *
                 /* "potential.pyx":30
  * 
  *     with nogil, parallel():
- *         for i in prange(N):             # <<<<<<<<<<<<<<
+ *         for i in prange(N, schedule="dynamic"):             # <<<<<<<<<<<<<<
  *             for j in range(i):
  * 
  */
@@ -3598,7 +3598,7 @@ static PyObject *__pyx_pf_9potential_4sum_inv_pairdists(CYTHON_UNUSED PyObject *
                     if (__pyx_t_5 > 0)
                     {
                         #ifdef _OPENMP
-                        #pragma omp for lastprivate(__pyx_v_W2) lastprivate(__pyx_v_dist2) firstprivate(__pyx_v_i) lastprivate(__pyx_v_i) lastprivate(__pyx_v_j) lastprivate(__pyx_v_k) lastprivate(__pyx_v_r) lastprivate(__pyx_v_temp) lastprivate(__pyx_v_u) lastprivate(__pyx_v_u2)
+                        #pragma omp for lastprivate(__pyx_v_W2) lastprivate(__pyx_v_dist2) firstprivate(__pyx_v_i) lastprivate(__pyx_v_i) lastprivate(__pyx_v_j) lastprivate(__pyx_v_k) lastprivate(__pyx_v_r) lastprivate(__pyx_v_temp) lastprivate(__pyx_v_u) lastprivate(__pyx_v_u2) schedule(dynamic)
                         #endif /* _OPENMP */
                         for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_5; __pyx_t_4++){
                             {
@@ -3615,7 +3615,7 @@ static PyObject *__pyx_pf_9potential_4sum_inv_pairdists(CYTHON_UNUSED PyObject *
 
                                 /* "potential.pyx":31
  *     with nogil, parallel():
- *         for i in prange(N):
+ *         for i in prange(N, schedule="dynamic"):
  *             for j in range(i):             # <<<<<<<<<<<<<<
  * 
  *                 dist2 = 0
@@ -3799,7 +3799,7 @@ static PyObject *__pyx_pf_9potential_4sum_inv_pairdists(CYTHON_UNUSED PyObject *
  *     h = 2.8 * epsilon
  * 
  *     with nogil, parallel():             # <<<<<<<<<<<<<<
- *         for i in prange(N):
+ *         for i in prange(N, schedule="dynamic"):
  *             for j in range(i):
  */
       /*finally:*/ {

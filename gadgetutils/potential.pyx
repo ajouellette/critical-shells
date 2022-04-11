@@ -27,7 +27,7 @@ def sum_inv_pairdists(my_float [:,::1] pos, epsilon=1e-2):
     h = 2.8 * epsilon
 
     with nogil, parallel():
-        for i in prange(N):
+        for i in prange(N, schedule="dynamic"):
             for j in range(i):
 
                 dist2 = 0
