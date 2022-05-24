@@ -47,6 +47,9 @@ class Snapshot:
             self.a = f["Header"].attrs["Time"]
             self.z = f["Header"].attrs["Redshift"]
             self.box_size = f["Header"].attrs["BoxSize"]
+            self.softening = f["Parameters"].attrs["SofteningComovingClass0"]
+            if self.softening * self.a > f["Parameters"].attrs["SofteningMaxPhysClass0"]:
+                self.softening = f["Parameters"].attrs["SofteningMaxPhysClass0"] / self.a
 
             # Cosmology parameters
             self.OmegaLambda = f["Parameters"].attrs["OmegaLambda"]
