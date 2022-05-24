@@ -84,12 +84,11 @@ def main():
 
             vel = pd.vel[inds]
             vel_center = np.mean(vel, axis=0, dtype=float)
-            vel = np.sqrt(pd.a) * (vel - vel_center)# + pd.Hubble * pos / pd.h
+            vel = np.sqrt(pd.a) * (vel - vel_center) + pd.Hubble / pd.h * pd.a * pos
 
             time_start2 = time.perf_counter()
             T = energy.calc_kinetic(vel)
-            epsilon = 1.2e-2 if pd.a < 1 else 1.2e-2 / pd.a
-            U = 1/pd.a * energy.calc_potential(pos, pd.part_mass / 1e10, G_sim_units, epsilon=epsilon)
+            U = 1/pd.a * energy.calc_potential(pos, pd.part_mass / 1e10, G_sim_units, epsilon=pd.softening)
             time_end2 = time.perf_counter()
             time_ms = (time_end2 - time_start2) * 1e3
 
