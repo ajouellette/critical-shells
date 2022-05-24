@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --time=2:30:00
+#SBATCH --time=3:30:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=40
 #SBATCH --job-name=energies_sh
@@ -20,6 +20,7 @@ fi
 
 source ~/.bashrc
 conda activate conda-cosmo
+export OMP_NUM_THREADS=2
 
 date
 srun python -u scripts/energy.py $data_dir subhalos
