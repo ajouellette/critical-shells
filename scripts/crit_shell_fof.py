@@ -59,6 +59,7 @@ def main():
 
     radii1 = np.zeros(count[rank])
     centers1 = np.zeros((count[rank], 3))
+    n_shell = np.zeros(count[rank], dtype=int)
     n_fof = np.zeros((count[rank], len(link_params)), dtype=int)
     fof_radii = np.zeros((count[rank], len(link_params)))
     fof_centers = np.zeros((count[rank], len(link_params)))
@@ -135,6 +136,7 @@ def main():
 
         radii1[i] = radius1
         centers1[i] = center1
+        n_shell[i] = pd.query_radius(center1, radius1, count_only=True)
         #densities[i] = density / crit_density
         #print(density/crit_density, "clipped" if radius1 < np.max(p_radii[mask_ids]) else "")
 
@@ -144,6 +146,7 @@ def main():
         print("Finished.")
         all_radii1 = np.zeros_like(all_radii)
         all_centers1 = np.zeros_like(all_centers)
+        all_n_shell = np.zeros_like(all_radii, dtype=int)
         all_n_fof = np.zeros((len(all_radii), len(link_lens)), dtype=int)
         all_fof_radii = np.zeros((len(all_radii), len(link_lens)))
         #all_frac_collapse = np.zeros_like(all_radii, dtype=float)
@@ -151,6 +154,7 @@ def main():
     else:
         all_n_fof = None
         all_radii1 = None
+        all_n_shell = None
         all_centers1 = None
         #all_frac_collapse = None
         #all_densities = None
@@ -159,6 +163,7 @@ def main():
         MPI.LONG], root=0)
     comm.Gatherv(radii1, [all_radii1, count, displ, MPI.DOUBLE], root=0)
     comm.Gatherv(centers1, [all_centers1, 3*count, 3*displ, MPI.DOUBLE], root=0)
+    comm.Gatherv(n_shell, [all_n_shell, count, displ, MPI.LONG], root=0)
     #comm.Gatherv(frac_collapse, [all_frac_collapse, count, displ, MPI.DOUBLE], root=0)
     #comm.Gatherv(densities, [all_densities, count, displ, MPI.DOUBLE], root=0)
 
@@ -170,6 +175,7 @@ def main():
             f.attrs["NlinkParams"] = len(link_params)
             f.create_dataset("ShellCenters", data=all_centers1)
             f.create_dataset("ShellRadii", data=all_radii1)
+            f.create_dataset("ShellMasses", data=pd.part_mass * all_n_shell)
             f.create_dataset("LinkParams", data=link_params)
             f.create_dataset("Nparticles", data=all_n_fof)
             f.create_dataset("Masses", data=pd.part_mass * all_n_fof)
